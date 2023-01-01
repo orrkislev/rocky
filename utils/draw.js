@@ -23,6 +23,10 @@ async function drawDotXY(x, y) {
     // strokeWeight(penThickness * (1 + noise(nx)) * PS)
 
     line(x, y, x, y)
+    // ctx.beginPath()
+    // ctx.moveTo(x, y)
+    // ctx.lineTo(x, y)
+    // ctx.stroke()
 }
 
 let currPenStroke = null

@@ -28,7 +28,7 @@ function createHeightMap() {
     } else if (mapType == 2) {
         c_map.background(127)
         c_map.noFill()
-        const pathCreator = new PathCreator(mapSize.x, mapSize.y, pathTypes.noiseField)
+        const pathCreator = new PathCreator(mapSize.x, mapSize.y)
         const sumLines = random(200, 1000)
         for (let i = 0; i < sumLines; i++) {
             path = pathCreator.createPath()
@@ -82,8 +82,8 @@ function createHeightMap() {
         c_map.updatePixels()
     } else if (mapType == 6) {
         c_map.loadPixels()
-        const ratioNoiseScale = random(100,400)
-        const ratioForce = random(100,400)
+        const ratioNoiseScale = random(100, 400)
+        const ratioForce = random(100, 400)
         const noiseScale = random(200)
         for (let y = 0; y < mapSize.y; y++) {
             for (let x = 0; x < mapSize.x; x++) {
@@ -107,13 +107,12 @@ function createHeightMap() {
     // smearPath.smooth()
     // // s_map = smear(c_map, smearPath, 100, 30)
 
-    for (let i = 0; i < 5; i++){
+    for (let i = 0; i < 5; i++) 
         c_map = swirl(c_map, p(random(mapSize.x), random(mapSize.y)), random(300) * sign(random(-1, 1)), random(mapSize.x / 4))
-    }
 
     // s_map = tracks(s_map, new Path([p(0, 0), p(mapSize.x, mapSize.y)]), 100, 30)
-    // for (let i = 0; i < 3; i++)
-    // ammonite(s_map, randomIn(mapSize), random(10, 50))
+    for (let i = 0; i < 3; i++)
+        ammonite(c_map, randomIn(mapSize), random(10, 50))
 
     // footPrint(s_map)
 
