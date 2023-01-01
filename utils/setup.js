@@ -15,4 +15,13 @@ function initP5(webgl = false, ratio) {
     V = createVector
 
     paper.setup();
+
+}
+
+function preload() {
+    initShaders()
+}
+
+function initShaders() {
+    swirlShader = loadShader('shaders/shader.vert', 'shaders/swirl.frag')
 }

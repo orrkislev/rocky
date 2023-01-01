@@ -181,8 +181,9 @@ function getFragmentShader() {
         }
 
         void main(){
-            float val = .5 + scene(vTexCoord * u_resolution);
+            // float val = .5 + scene(vTexCoord * u_resolution);
             // val += snoise(vTexCoord * u_resolution / 10.0) * .005;
+            float val = snoise(vTexCoord * u_resolution / 10.0);
             gl_FragColor = vec4(vec3(val), 1.0);
         }
     `

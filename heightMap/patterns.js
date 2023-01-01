@@ -1,13 +1,14 @@
 function createHeightMap() {
-    let c_map = createGraphics(width * 2, width)
+    let c_map = createGraphics(width, width / 2)
     c_map.noStroke()
     const mapSize = p(c_map.width, c_map.height)
     const scaler = mapSize.x / 100
     const c_size = scaler * random(2, 20)
 
-    const mapType = choose([0, 1, 2, 3, 4, 5, 6])
+    const mapType = choose([0, 1, 2, 3, 5, 6])
 
     if (mapType == 0) {
+        console.time('0 - random circles')
         c_map.background(127)
         c_map.noStroke()
         const sumCircles = random(50, 1000)
@@ -15,8 +16,10 @@ function createHeightMap() {
             fillShape(c_map, new Circle(randomIn(mapSize), random(c_size)), null, 255, random(30, 100), random(scaler * 2))
             fillShape(c_map, new Circle(randomIn(mapSize), random(c_size)), null, 0, random(30, 100))
         }
+        console.timeEnd('0 - random circles')
 
     } else if (mapType == 1) {
+        console.time('1 - craters')
         c_map.background(127)
         for (let i = 0; i < 500; i++) {
             const radius = c_size * random(.05, .3)
@@ -25,7 +28,10 @@ function createHeightMap() {
             fillShape(c_map, shape, p(scaler * 2, scaler * 2), 255, random(100, 255), random(scaler, scaler * 4))
             fillShape(c_map, shape.offset(-scaler, true), null, 0, random(100, 255), random(scaler * 2))
         }
+        console.timeEnd('1 - craters')
+
     } else if (mapType == 2) {
+        console.time('2 - lines')
         c_map.background(127)
         c_map.noFill()
         const pathCreator = new PathCreator(mapSize.x, mapSize.y)
@@ -42,27 +48,35 @@ function createHeightMap() {
             c_map.stroke(0, random(50, 150))
             fillShape(c_map, path)
         }
+        console.timeEnd('2 - lines')
+
     } else if (mapType == 3) {
+        console.time('3 - hexagons')
         const sampler = new HexagonGridSampler(mapSize.x, mapSize.y)
         c_map.background(255)
         for (let i = 0; i < 1000; i++) {
             const pos = sampler.sample()
             hole(c_map, pos, sampler.r * random(.1, .5))
         }
-        c_map.drawingContext.filter = `none`
+        console.timeEnd('3 - hexagons')
+
     } else if (mapType == 4) {
+        console.time('4 - grid')
         c_map.background(127)
         const cellSize = scaler * random(2, 10)
         c_map.loadPixels()
         for (let y = 0; y < mapSize.y; y++) {
             for (let x = 0; x < mapSize.x; x++) {
-                const vx = 1 - (x % cellSize) / cellSize
-                const vy = 1 - (y % cellSize) / cellSize
+                const vx = easeInOutExpo(1 - (x % cellSize) / cellSize)
+                const vy = easeInOutExpo(1 - (y % cellSize) / cellSize)
                 c_map.set(x, y, vx * 127 + vy * 127)
             }
         }
         c_map.updatePixels()
+        console.timeEnd('4 - grid')
+
     } else if (mapType == 5) {
+        console.time('5 - voronoi')
         c_map.background(127)
         const areas = Array(round_random(20, 150)).fill().map(_ => ({ pos: p(mapSize.x * random(-.2, 1.2), mapSize.y * random(-.2, 1.2)), clr: random(255), d: 0 }))
         const thickness = random(10, 45)
@@ -80,22 +94,30 @@ function createHeightMap() {
             }
         }
         c_map.updatePixels()
+        console.timeEnd('5 - voronoi')
+
     } else if (mapType == 6) {
+        console.time('6 - noise')
         c_map.loadPixels()
-        const ratioNoiseScale = random(100, 400)
-        const ratioForce = random(100, 400)
-        const noiseScale = random(200)
+        const ratioNoiseScale = random(4)
+        const ratioForce = random(5)
+        const noiseScale = random(6)
         for (let y = 0; y < mapSize.y; y++) {
+            const percY = y / mapSize.y
             for (let x = 0; x < mapSize.x; x++) {
-                const ratio = noise(x / ratioNoiseScale, y / ratioNoiseScale)
-                const noiseScaleX = noiseScale + ratio * ratioForce
-                const noiseScaleY = noiseScale + ratio / ratioForce
-                const n = noise(x / noiseScaleX, y / noiseScaleY)
+                const percX = x / mapSize.x
+                const ratio = noise(percX * ratioNoiseScale, percY * ratioNoiseScale)
+                const noiseScaleX = noiseScale + ratioForce * ratio
+                const noiseScaleY = noiseScale + ratioForce / ratio
+                const n = noise(noiseScaleX * percX, noiseScaleY * percY)
                 c_map.set(x, y, n * 255)
             }
         }
         c_map.updatePixels()
+        console.timeEnd('6 - noise')
     }
+
+    console.time('deformations')
 
     // smearPath = new Path([
     //     p(0.1 * mapSize.x, 0.2 * mapSize.y),
@@ -107,14 +129,19 @@ function createHeightMap() {
     // smearPath.smooth()
     // // s_map = smear(c_map, smearPath, 100, 30)
 
-    for (let i = 0; i < 5; i++) 
+
+    for (let i = 0; i < 5; i++)
         c_map = swirl(c_map, p(random(mapSize.x), random(mapSize.y)), random(300) * sign(random(-1, 1)), random(mapSize.x / 4))
 
-    // s_map = tracks(s_map, new Path([p(0, 0), p(mapSize.x, mapSize.y)]), 100, 30)
-    for (let i = 0; i < 3; i++)
-        ammonite(c_map, randomIn(mapSize), random(10, 50))
+    console.timeEnd('deformations')
 
+
+    console.time('elements')
+    // s_map = tracks(s_map, new Path([p(0, 0), p(mapSize.x, mapSize.y)]), 100, 30)
+    // for (let i = 0; i < 3; i++) ammonite(c_map, randomIn(mapSize), random(10, 50))
     // footPrint(s_map)
+    console.timeEnd('elements')
+
 
     return c_map
 }

@@ -1,4 +1,21 @@
+let shaderGraphics, shaderResultGraphics
+
 function swirl(img, pos, ammount, r) {
+    if (!shaderGraphics) shaderGraphics = createGraphics(img.width, img.height, WEBGL)
+    if (!shaderResultGraphics) shaderResultGraphics = createGraphics(img.width, img.height)
+    shaderGraphics.noStroke()
+    shaderGraphics.shader(swirlShader)
+    swirlShader.setUniform('texture', img)
+    swirlShader.setUniform('resolution', [img.width, img.height])
+    swirlShader.setUniform('pos', [pos.x, pos.y])
+    swirlShader.setUniform('strength', ammount)
+    swirlShader.setUniform('radius', r)
+    shaderGraphics.rect(0, 0, img.width, img.height)
+    shaderResultGraphics.image(shaderGraphics, 0, 0, shaderResultGraphics.width, shaderResultGraphics.height)
+    return shaderResultGraphics
+}
+
+function swirl2(img, pos, ammount, r) {
     const c = createGraphics(img.width, img.height)
     c.image(img, 0, 0)
     c.loadPixels()

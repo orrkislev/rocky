@@ -1,4 +1,5 @@
 function setup() {
+    console.log('start', fxhash)
     initP5()
     backgroundColor = color(0)
     pencilDarkColor = [0, 0, 0]
@@ -8,21 +9,22 @@ function setup() {
 }
 
 async function makeImage() {
-    projection = choose([cylindricProjection, azimuthalProjection, conicProjection, vanDerGrintenProjection, naturalEarthProjection, doubleAzimuthalProjection])
+    projection = conicProjection//choose([cylindricProjection, azimuthalProjection, conicProjection, vanDerGrintenProjection, naturalEarthProjection, doubleAzimuthalProjection])
     fillDir = random(30, 80) * (random() < .5 ? 1 : -1)
     lightPos = V(fillDir > 0 ? 0 : 1, 0)
 
     const gridAspectRatio = 1 / 2
     const horizontalMargin = width * .07
     gridWidth = width - horizontalMargin * 2
-    gridHeight = width * gridAspectRatio
+    gridHeight = gridWidth * gridAspectRatio
+    if (gridHeight > height - horizontalMargin * 2) {
+        gridHeight = height - horizontalMargin * 2
+        gridWidth = gridHeight / gridAspectRatio
+    }
 
-    console.log('start', fxhash)
-    console.time('make height map')
-    heightMap = createHeightMap_shader()
+    // heightMap = createHeightMap_shader()
     heightMap = createHeightMap()
-    image(heightMap, 0, 0, width, width / 2)
-    console.timeEnd('make height map')
+    image(heightMap, 50, 50, width-100, height-100)
     // return
 
     // normalMap = createNormalMap(heightMap)
@@ -40,17 +42,16 @@ async function makeImage() {
     let lightHeight = null
     let lastDepth = 0
     let col = 0
-    const pixel_density = pixelDensity()
+    const pixel_density = heightMap.pixelDensity()
+    let drawn = false
 
     console.time('draw')
-    translate(width / 2, height / 2)
+    translate(-width / 2, height / 2)
     background(backgroundColor)
-
 
     const offsetX = gridHeight * tan(90 - fillDir)
     const startX = fillDir > 0 ? -gridWidth / 2 - offsetX : -gridWidth / 2
     const endX = fillDir > 0 ? gridWidth / 2 : gridWidth / 2 - offsetX
-
     const moveX = Math.sign(fillDir) * cos(fillDir) / 2
     const moveY = Math.sign(fillDir) * sin(fillDir) / 2
     for (let x = startX; x < endX; x += .5) {
@@ -67,29 +68,32 @@ async function makeImage() {
                 const percX = (pos2d.y + 180) / 360
                 const percY = (pos2d.x + 90) / 180
 
-                const heightMapX = round(percX * heightMap.width)
-                const heightMapY = round(percY * heightMap.height)
-                const heightMaI = (heightMapX + heightMapY * heightMap.width * pixel_density) * 4
-                let depth = heightMap.pixels[heightMaI]
+                // const heightMapX = round(percX * heightMap.width)
+                // const heightMapY = round(percY * heightMap.height)
+                // const heightMaI = (heightMapX + heightMapY * heightMap.width * pixel_density) * 4
+                // let depth = heightMap.pixels[heightMaI]
+                const sampleColor = heightMap.get(percX * heightMap.width, percY * heightMap.height)
+                let depth = sampleColor[0]
 
                 depth += noise(percX * 10, percY * 10) * 5 - 2.5
                 const slope = depth - lastDepth
                 lastDepth = depth
 
 
-                col = easeInOutExpo((slope + 1) / 2) * 255
+                col = easeInOutExpo((slope + 1) / 2) * 70
                 if (depth > lightHeight) col = 255
 
                 lightHeight = max(lightHeight, depth)
-                const distToLight = V(x / gridHeight + .5, y / gridWidth + .5).sub(lightPos).mag()
-                const lightStep = map(distToLight, 0, 1.6, 1, 0) * PS
+                const distToLight = V(pos.x / gridHeight + .5, pos.y / gridWidth + .5).sub(lightPos).mag()
+                const lightStep = map(distToLight, 0, 1.6, .6, 0) * PS
                 lightHeight -= lightStep
 
-                penThickness = depth / 127
+                // strokeWeight(depth / 127)
                 stroke(lerp(pencilDarkColor[0], pencilBrightColor[0], col / 255),
                     lerp(pencilDarkColor[1], pencilBrightColor[1], col / 255),
                     lerp(pencilDarkColor[2], pencilBrightColor[2], col / 255), 100)
-                line(pos.x, pos.y, pos.x, pos.y)
+                line(pos.x+width, pos.y, pos.x+width, pos.y)
+                drawn = true
                 makeTime('draw dot')
             } else {
                 lightHeight = null
@@ -97,7 +101,8 @@ async function makeImage() {
             }
         }
         pos.x++
-        await timeout()
+        if (drawn) await timeout()
+        drawn = false
     }
 
     // await fill3D(async ({ pos2d, pos3d, x, y }) => {
@@ -155,7 +160,7 @@ async function makeImage() {
     //     lightHeight = null
     //     lastDepth = -1
     // })
-    
+
     console.timeEnd('draw')
     printTimes()
 }
