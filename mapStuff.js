@@ -171,3 +171,40 @@ async function fill3DCondition(condition, action = drawDotXY, actionElse = async
     })
     return edges
 }
+
+
+async function fillAll(func) {
+    const offsetX = gridHeight * tan(90 - fillDir)
+    const startX = fillDir > 0 ? -gridWidth / 2 - offsetX : -gridWidth / 2
+    const endX = fillDir > 0 ? gridWidth / 2 : gridWidth / 2 - offsetX
+
+    const moveX = Math.sign(fillDir) * cos(fillDir) / 2
+    const moveY = Math.sign(fillDir) * sin(fillDir) / 2
+    for (let x = startX; x < endX; x += .5) {
+        let pos = new Point(x, -gridHeight / 2)
+        while (pos.y < gridHeight / 2) {
+            pos.y += moveY
+            pos.x += moveX
+            if (pos.x < -gridWidth / 2 || pos.x > gridWidth / 2 || pos.y < -gridHeight / 2 || pos.y > gridHeight / 2) continue
+            await func(pos.x, pos.y)
+        }
+        pos.x++
+        await timeout()
+    }
+}
+
+async function fill3D(action, actionElse = async () => { }) {
+    await fillAll(async (x, y) => {
+        const relX = x / gridWidth
+        const relY = y / gridHeight
+        makeTime('fill all')
+        const pos2d = projection.toSphere(relX, relY)
+        makeTime('to sphere')
+        if (pos2d) {
+            const pos3d = coordToVector(pos2d.x, pos2d.y, 1)
+            await action({ pos2d, pos3d, x, y })
+        } else {
+            await actionElse(x, y)
+        }
+    })
+}

@@ -32,20 +32,21 @@ function createHeightMap() {
 
     } else if (mapType == 2) {
         console.time('2 - lines')
-        c_map.background(127)
+        c_map.background(0)
         c_map.noFill()
         const pathCreator = new PathCreator(mapSize.x, mapSize.y)
-        const sumLines = random(200, 1000)
+        const b2lThreshold = random()
+        const sumLines = 1000
         for (let i = 0; i < sumLines; i++) {
             path = pathCreator.createPath()
 
             c_map.drawingContext.filter = `blur(${scaler * random(2, 6)}px)`
             c_map.stroke(255, 200)
-            c_map.strokeWeight(scaler)
-            fillShape(c_map, path, p(scaler * 2, scaler * 2))
+            c_map.strokeWeight(scaler * random(2))
+            fillShape(c_map, path)
             c_map.drawingContext.filter = `blur(${random(scaler * 2)}px)`
-            c_map.strokeWeight(scaler * .5)
-            c_map.stroke(0, random(50, 150))
+            c_map.strokeWeight(scaler * random())
+            c_map.stroke(random()<b2lThreshold ? 0 : 255, random(50, 150))
             fillShape(c_map, path)
         }
         console.timeEnd('2 - lines')
@@ -130,7 +131,7 @@ function createHeightMap() {
     // // s_map = smear(c_map, smearPath, 100, 30)
 
 
-    for (let i = 0; i < 5; i++)
+    for (let i = 0; i < 1; i++)
         c_map = swirl(c_map, p(random(mapSize.x), random(mapSize.y)), random(300) * sign(random(-1, 1)), random(mapSize.x / 4))
 
     console.timeEnd('deformations')
