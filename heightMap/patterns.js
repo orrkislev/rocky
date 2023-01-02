@@ -5,7 +5,7 @@ function createHeightMap() {
     const scaler = mapSize.x / 100
     const c_size = scaler * random(2, 20)
 
-    const mapType = choose([0, 1, 2, 3, 5, 6])
+    const mapType = choose([0, 1, 2, 3, 6, 7])
 
     if (mapType == 0) {
         console.time('0 - random circles')
@@ -46,7 +46,7 @@ function createHeightMap() {
             fillShape(c_map, path)
             c_map.drawingContext.filter = `blur(${random(scaler * 2)}px)`
             c_map.strokeWeight(scaler * random())
-            c_map.stroke(random()<b2lThreshold ? 0 : 255, random(50, 150))
+            c_map.stroke(random() < b2lThreshold ? 0 : 255, random(50, 150))
             fillShape(c_map, path)
         }
         console.timeEnd('2 - lines')
@@ -78,9 +78,9 @@ function createHeightMap() {
 
     } else if (mapType == 5) {
         console.time('5 - voronoi')
-        c_map.background(127)
-        const areas = Array(round_random(20, 150)).fill().map(_ => ({ pos: p(mapSize.x * random(-.2, 1.2), mapSize.y * random(-.2, 1.2)), clr: random(255), d: 0 }))
-        const thickness = random(10, 45)
+        c_map.background(30)
+        const areas = Array(round_random(20, 150)).fill().map(_ => ({ pos: p(mapSize.x * random(-.2, 1.2), mapSize.y * random(-.2, 1.2)), clr: random(2), d: 0 }))
+        const thickness = scaler * random(.5, 4)
         c_map.loadPixels()
         for (let y = 0; y < mapSize.y; y++) {
             for (let x = 0; x < mapSize.x; x++) {
@@ -91,7 +91,7 @@ function createHeightMap() {
                 const n = 255 - noise(x / 100, y / 100) * 80
                 let cc = ordered[1].d - ordered[0].d
                 if (cc < thickness) c_map.set(x, y, smoothMap(cc, 0, thickness, n, 127))
-                else c_map.set(x, y, ordered[0].d)
+                else c_map.set(x, y, ordered[0].d * ordered[0].clr)
             }
         }
         c_map.updatePixels()
@@ -116,6 +116,24 @@ function createHeightMap() {
         }
         c_map.updatePixels()
         console.timeEnd('6 - noise')
+    } else if (mapType == 7) {
+        c_map.background(50)
+        c_map.noFill()
+        c_map.stroke(255)
+        const noiseScale = random(10, 200)
+        for (let x = 1; x < mapSize.x * 1.1; x += scaler * 2) {
+            for (let y = 1; y < mapSize.y * 1.1; y += scaler * 2) {
+                const path = new Path()
+                let pos = p(x, y)
+                while (pos.x > -mapSize.x * .01 && pos.x < mapSize.x * 1.1 && pos.y > -mapSize.y * .1 && pos.y < mapSize.y * 1.1 && path.length < 400) {
+                    const a = noise(pos.x / noiseScale, pos.y / noiseScale) * 360
+                    pos = pos.add(pointFromAngle(a, 5))
+                    path.add(pos)
+                }
+                path.smooth()
+                fillShape(c_map, path, null, null, null, random(scaler * 7))
+            }
+        }
     }
 
     console.time('deformations')
@@ -173,6 +191,14 @@ function fillShape(img, path, offset, clr, alpha = 255, blur) {
         img.vertex(pos.x + offset.x, pos.y + offset.y)
     }
     img.endShape()
+}
+
+function strokeShape(img, path, thick1, thick2) {
+    for (let i = 0; i < path.length; i++) {
+        const pos = path.getPointAt(i)
+        img.strokeWeight(lerp(thick1, thick2, i / path.length))
+        img.line(pos.x, pos.y, pos.x, pos.y)
+    }
 }
 
 function hole(img, pos, r) {

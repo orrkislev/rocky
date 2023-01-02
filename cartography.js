@@ -1,11 +1,12 @@
+paperColors = [[245, 245, 220], [239, 208, 184], [219, 206, 160], [234, 234, 234]]
+
 function setup() {
     console.log('start', fxhash)
     initP5()
 
-    const brightclr = 200
-    paperColor = [brightclr, brightclr, brightclr]
-    pencilDarkColor = [0,0,0]
-    pencilBrightColor = [brightclr, brightclr, brightclr]
+    paperColor = choose(paperColors)
+    pencilDarkColor = [0, 0, 0]
+    pencilBrightColor = paperColor
     makeImage()
 }
 
@@ -19,7 +20,7 @@ async function makeImage() {
     lightPos = V(fillDir > 0 ? 0 : 1, 0)
 
     const gridAspectRatio = 1 / 2
-    const horizontalMargin = width * .07
+    const horizontalMargin = width * .1
     gridWidth = width - horizontalMargin * 2
     gridHeight = gridWidth * gridAspectRatio
     if (gridHeight > height - horizontalMargin * 2) {
@@ -28,7 +29,6 @@ async function makeImage() {
     }
 
     // heightMap = createHeightMap_shader()
-    background(255, 0, 0)
     heightMap = createHeightMap()
     image(heightMap, 50, 50, width - 100, height - 100)
     // return
@@ -48,12 +48,12 @@ async function makeImage() {
     let lightHeight = null
     let lastDepth = 0
     let col = 0
-    const pixel_density = heightMap.pixelDensity()
+    // const pixel_density = heightMap.pixelDensity()
     let drawn = false
 
     console.time('draw')
-    makeBackground()
 
+    makeBackground()
     translate(-width / 2, height / 2)
 
     const offsetX = gridHeight * tan(90 - fillDir)
@@ -101,7 +101,7 @@ async function makeImage() {
                     lerp(pencilDarkColor[1], pencilBrightColor[1], col / 255),
                     lerp(pencilDarkColor[2], pencilBrightColor[2], col / 255), alpha)
 
-                    // line(pos.x + width, pos.y, pos.x + width, pos.y)
+                // line(pos.x + width, pos.y, pos.x + width, pos.y)
                 const drawPos = distortPos(pos)
                 line(drawPos.x + width, drawPos.y, drawPos.x + width, drawPos.y)
                 drawn = true
@@ -123,16 +123,23 @@ async function makeImage() {
 function makeBackground() {
     background(paperColor[0], paperColor[1], paperColor[2])
 
-    if (random() < 0.5) {
+    if (random() < .5) {
         fill(pencilDarkColor[0], pencilDarkColor[1], pencilDarkColor[2])
-        rect(30, 30, width - 60, height - 60)
 
+        if (random() < .5) {
+            rect(width / 2 - gridWidth / 2 - gridWidth * .05, 30, gridWidth * 1.1, height - 60)
+        } else {
+            rect(30, height / 2 - gridHeight / 2 - gridHeight * 0.05, width - 60, gridHeight * 1.1)
+        }
+        // rect(-gridWidth/2, -gridHeight/2, gridWidth, gridHeight)
+
+        const paperColorHex = `#${num2hex(paperColor[0])}${num2hex(paperColor[1])}${num2hex(paperColor[2])}`
         for (let i = 0; i < 10; i++) {
             const x = random(width)
             const y = random(height)
             const gradient = drawingContext.createRadialGradient(x, y, 0, x, y, random(width))
-            gradient.addColorStop(0, `#${num2hex(paperColor[0])}${num2hex(paperColor[1])}${num2hex(paperColor[2])}11`)
-            gradient.addColorStop(1, 'transparent')
+            gradient.addColorStop(0, paperColorHex + '11')
+            gradient.addColorStop(1, paperColorHex + '00')
             drawingContext.fillStyle = gradient
             rect(0, 0, width, height)
         }
