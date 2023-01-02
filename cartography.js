@@ -2,7 +2,7 @@ paperColors = [[245, 245, 220], [239, 208, 184], [219, 206, 160], [234, 234, 234
 
 function setup() {
     console.log('start', fxhash)
-    initP5()
+    initP5(false, 16 / 9)
 
     paperColor = choose(paperColors)
     pencilDarkColor = [0, 0, 0]
@@ -11,11 +11,14 @@ function setup() {
 }
 
 async function makeImage() {
+
+    console.time('setup stuff')
     projection = choose([cylindricProjection, //azimuthalProjection, 
         conicProjection, vanDerGrintenProjection,
         naturalEarthProjection, doubleAzimuthalProjection,
         azimuthalEqualAreaProjection
     ])
+    // projection = naturalEarthProjection
     fillDir = random(30, 80) * (random() < .5 ? 1 : -1)
     lightPos = V(fillDir > 0 ? 0 : 1, 0)
 
@@ -27,11 +30,15 @@ async function makeImage() {
         gridHeight = height - horizontalMargin * 2
         gridWidth = gridHeight / gridAspectRatio
     }
+    console.timeEnd('setup stuff')
 
     // heightMap = createHeightMap_shader()
+    console.time('make height map')
     heightMap = createHeightMap()
     image(heightMap, 50, 50, width - 100, height - 100)
+    console.timeEnd('make height map')
     // return
+
 
     // normalMap = createNormalMap(heightMap)
 
@@ -51,9 +58,11 @@ async function makeImage() {
     // const pixel_density = heightMap.pixelDensity()
     let drawn = false
 
-    console.time('draw')
-
+    console.time('draw background')
     makeBackground()
+    console.timeEnd('draw background')
+
+    console.time('draw relief')
     translate(-width / 2, height / 2)
 
     const offsetX = gridHeight * tan(90 - fillDir)
@@ -96,7 +105,7 @@ async function makeImage() {
                 if (abs(pos2d.x) > 87) alpha *= map(abs(pos2d.x), 87, 90, 1, .5)
                 if (abs(pos2d.y) > 177) alpha *= map(abs(pos2d.y), 177, 180, 1, .5)
 
-                strokeWeight(PS * depth / 255)
+                strokeWeight(PS * (1 - depth / 255) + .1)
                 stroke(lerp(pencilDarkColor[0], pencilBrightColor[0], col / 255),
                     lerp(pencilDarkColor[1], pencilBrightColor[1], col / 255),
                     lerp(pencilDarkColor[2], pencilBrightColor[2], col / 255), alpha)
@@ -115,7 +124,7 @@ async function makeImage() {
         drawn = false
     }
 
-    console.timeEnd('draw')
+    console.timeEnd('draw relief')
 }
 
 
@@ -127,9 +136,9 @@ function makeBackground() {
         fill(pencilDarkColor[0], pencilDarkColor[1], pencilDarkColor[2])
 
         if (random() < .5) {
-            rect(width / 2 - gridWidth / 2 - gridWidth * .05, 30, gridWidth * 1.1, height - 60)
+            rect(width / 2 - gridWidth / 2 - gridWidth * .05, 30, gridWidth * 1.1, height - 60, 2)
         } else {
-            rect(30, height / 2 - gridHeight / 2 - gridHeight * 0.05, width - 60, gridHeight * 1.1)
+            rect(30, height / 2 - gridHeight / 2 - gridHeight * 0.05, width - 60, gridHeight * 1.1, 2)
         }
         // rect(-gridWidth/2, -gridHeight/2, gridWidth, gridHeight)
 
