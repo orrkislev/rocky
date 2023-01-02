@@ -1,9 +1,9 @@
 function initP5(webgl = false, ratio) {
-    if (ratio){
+    if (ratio) {
         if (windowWidth < windowHeight * ratio) {
-            createCanvas(windowWidth, windowWidth / ratio, webgl ? WEBGL : null)
+            createCanvas(round(windowWidth), round(windowWidth / ratio), webgl ? WEBGL : null)
         } else {
-            createCanvas(windowHeight * ratio, windowHeight, webgl ? WEBGL : null)
+            createCanvas(round(windowHeight * ratio), round(windowHeight), webgl ? WEBGL : null)
         }
     } else {
         canvas = createCanvas(windowWidth, windowHeight, webgl ? 'webgl' : 'p2d');

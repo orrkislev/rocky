@@ -18,6 +18,7 @@ async function makeImage() {
         naturalEarthProjection, doubleAzimuthalProjection,
         azimuthalEqualAreaProjection
     ])
+    console.log(projection)
     // projection = naturalEarthProjection
     fillDir = random(30, 80) * (random() < .5 ? 1 : -1)
     lightPos = V(fillDir > 0 ? 0 : 1, 0)
@@ -85,7 +86,7 @@ async function makeImage() {
                 const percY = (pos2d.x + 90) / 180
                 const sampleColor = heightMap.get(percX * heightMap.width, percY * heightMap.height)
                 let depth = sampleColor[0]
-                if (sampleColor[3] != 255) continue
+                // if (sampleColor[3] != 255) continue
 
                 depth += noise(percX * 30, percY * 30) * 8 - 4
                 const slope = depth - lastDepth

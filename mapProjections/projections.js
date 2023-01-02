@@ -12,6 +12,7 @@ function vectorToCoord(x, y, z) {
 }
 
 const azimuthalProjection = {
+    name: 'azimuthal',
     toPlane: (lat, log) => {
         let r = map(lat, -90, 90, 0, 1)
         r = easeOutQuad(r) / 2
@@ -33,6 +34,7 @@ const azimuthalProjection = {
 }
 
 const cylindricProjection = {
+    name: 'cylindric',
     toPlane: (lat, log) => {
         const x = map(log, -180, 180, -.5, .5)
         const y = map(lat, -90, 90, -.5, .5)
@@ -46,6 +48,7 @@ const cylindricProjection = {
 }
 
 const conicProjection = {
+    name: 'conic',
     toPlane: (lat, log) => {
         let r = map(lat, -90, 90, 0, 1)
         r = easeOutQuad(r)
@@ -75,6 +78,7 @@ const conicProjection = {
 }
 
 const vanDerGrintenProjection = {
+    name: 'vanDerGrinten',
     toPlane: (lat, lon) => {
         const phi = radians(lat),
             lambda = radians(lon)
@@ -141,6 +145,7 @@ const vanDerGrintenProjection = {
 }
 
 const naturalEarthProjection = {
+    name: 'naturalEarth',
     toPlane: (lat, lon) => {
         const phi = radians(lat),
             lambda = radians(lon)
@@ -168,26 +173,13 @@ const naturalEarthProjection = {
             lat = phi
         lat = map(lat, -halfPi, halfPi, -90, 90)
         lon = map(lon, -pi, pi, -180, 180)
-        if (abs(lat) > 90 || abs(lon) > 180) return null
+        // if (abs(lat) > 90 || abs(lon) > 180) return null
         return new Point(lat, lon);
     }
 }
 
-const sqrt3 = sqrt(3)
-const WagnerIVProjection = {
-    toSphere: (origx, origy) => {
-        const x = map(origx, -.5, .5, -halfPi, halfPi)
-        const y = map(origy, -.5, .5, -halfPi, halfPi)
-        const lambda = asin((sqrt3 / PI) * y)
-        let lat = x / (cos(lambda))
-        lat = map(lat, -halfPi, halfPi, -90, 90)
-        const lon = map(origy, -halfPi, halfPi, -90, 90)
-        // if (abs(lat) > 90 || abs(lon) > 180) return null
-        return new Point(lat, lon);
-    },
-}
-
 const doubleAzimuthalProjection = {
+    name: 'doubleAzimuthal',
     toPlane: (lat, lon) => {
         if (lon == 0) return null
         let y = map(lat, -90, 90, -1, 1)
@@ -209,6 +201,7 @@ const doubleAzimuthalProjection = {
 }
 
 const azimuthalEqualAreaProjection = {
+    name: 'azimuthalEqualArea',
     toSphere: (origx, origy) => {
         const x = map(origx, -.5, .5, -pi, pi)
         const y = map(origy, -.4, .4, -halfPi, halfPi)

@@ -1,5 +1,5 @@
 function createHeightMap() {
-    let c_map = createGraphics(width, width / 2)
+    let c_map = createGraphics(width, round(width / 2))
     c_map.noStroke()
     const mapSize = p(c_map.width, c_map.height)
     const scaler = mapSize.x / 100
@@ -102,7 +102,7 @@ function createHeightMap() {
         c_map.loadPixels()
         const ratioNoiseScale = random(4)
         const ratioForce = random(5)
-        const noiseScale = random(6)
+        const noiseScale = random(2,6)
         for (let y = 0; y < mapSize.y; y++) {
             const percY = y / mapSize.y
             for (let x = 0; x < mapSize.x; x++) {
@@ -149,8 +149,8 @@ function createHeightMap() {
     // // s_map = smear(c_map, smearPath, 100, 30)
 
 
-    for (let i = 0; i < 1; i++)
-        c_map = swirl(c_map, p(random(mapSize.x), random(mapSize.y)), random(300) * sign(random(-1, 1)), random(mapSize.x / 4))
+    // for (let i = 0; i < 1; i++)
+        // c_map = swirl(c_map, p(random(mapSize.x), random(mapSize.y)), random(300) * sign(random(-1, 1)), random(mapSize.x / 4))
 
     console.timeEnd('deformations')
 
