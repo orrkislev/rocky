@@ -153,6 +153,7 @@ const naturalEarthProjection = {
         return new Point(x, y)
     },
     toSphere: (origx, origy) => {
+        if (abs(origy) > .45) return null
         x = map(origx, -.5, .5, -pi, pi)
         y = map(origy, -.5, .5, -halfPi, halfPi)
         var phi = y, i = 25, delta, phi2, phi4, phi6;
@@ -170,6 +171,20 @@ const naturalEarthProjection = {
         if (abs(lat) > 90 || abs(lon) > 180) return null
         return new Point(lat, lon);
     }
+}
+
+const sqrt3 = sqrt(3)
+const WagnerIVProjection = {
+    toSphere: (origx, origy) => {
+        const x = map(origx, -.5, .5, -halfPi, halfPi)
+        const y = map(origy, -.5, .5, -halfPi, halfPi)
+        const lambda = asin((sqrt3 / PI) * y)
+        let lat = x / (cos(lambda))
+        lat = map(lat, -halfPi, halfPi, -90, 90)
+        const lon = map(origy, -halfPi, halfPi, -90, 90)
+        // if (abs(lat) > 90 || abs(lon) > 180) return null
+        return new Point(lat, lon);
+    },
 }
 
 const doubleAzimuthalProjection = {
@@ -191,4 +206,20 @@ const doubleAzimuthalProjection = {
         lon *= sign(x)
         return new Point(lat, lon);
     }
+}
+
+const azimuthalEqualAreaProjection = {
+    toSphere: (origx, origy) => {
+        const x = map(origx, -.5, .5, -pi, pi)
+        const y = map(origy, -.4, .4, -halfPi, halfPi)
+        const z = sqrt(x * x + y * y),
+            c = 2 * asin(z / 2),
+            sc = sin(c),
+            cc = cos(c);
+        let lon = atan2(x * sc, z * cc),
+            lat = asin(z && y * sc / z)
+        if (abs(lat) > 90 || abs(lon) > 180) return null
+        if (!lat && !lon) return null
+        return new Point(lat, lon);
+    },
 }

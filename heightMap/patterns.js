@@ -143,6 +143,20 @@ function createHeightMap() {
     // footPrint(s_map)
     console.timeEnd('elements')
 
+    // fix histogram
+    // c_map.loadPixels()
+    // let minVal = 1000
+    // let maxVal = 0
+    // for (let i=0;i<c_map.pixels.length;i+=4) {
+    //     const val = c_map.pixels[i]
+    //     if (val < minVal) minVal = val
+    //     if (val > maxVal) maxVal = val
+    // }
+    // for (let i=0;i<c_map.pixels.length;i+=4) {
+    //     c_map.pixels[i] = map(c_map.pixels[i], minVal, maxVal, 0, 255)
+    // }
+    // c_map.updatePixels()
+
 
     return c_map
 }

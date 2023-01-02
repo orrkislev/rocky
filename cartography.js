@@ -1,15 +1,20 @@
 function setup() {
     console.log('start', fxhash)
     initP5()
-    backgroundColor = color(0)
-    pencilDarkColor = [0, 0, 0]
-    pencilBrightColor = [255, 255, 255]
-    ctx = drawingContext
+
+    const brightclr = 200
+    paperColor = [brightclr, brightclr, brightclr]
+    pencilDarkColor = [0,0,0]
+    pencilBrightColor = [brightclr, brightclr, brightclr]
     makeImage()
 }
 
 async function makeImage() {
-    projection = choose([cylindricProjection, azimuthalProjection, conicProjection, vanDerGrintenProjection, naturalEarthProjection, doubleAzimuthalProjection])
+    projection = choose([cylindricProjection, //azimuthalProjection, 
+        conicProjection, vanDerGrintenProjection,
+        naturalEarthProjection, doubleAzimuthalProjection,
+        azimuthalEqualAreaProjection
+    ])
     fillDir = random(30, 80) * (random() < .5 ? 1 : -1)
     lightPos = V(fillDir > 0 ? 0 : 1, 0)
 
@@ -23,8 +28,9 @@ async function makeImage() {
     }
 
     // heightMap = createHeightMap_shader()
+    background(255, 0, 0)
     heightMap = createHeightMap()
-    image(heightMap, 50, 50, width-100, height-100)
+    image(heightMap, 50, 50, width - 100, height - 100)
     // return
 
     // normalMap = createNormalMap(heightMap)
@@ -70,25 +76,34 @@ async function makeImage() {
                 const percY = (pos2d.x + 90) / 180
                 const sampleColor = heightMap.get(percX * heightMap.width, percY * heightMap.height)
                 let depth = sampleColor[0]
+                if (sampleColor[3] != 255) continue
 
                 depth += noise(percX * 30, percY * 30) * 8 - 4
                 const slope = depth - lastDepth
                 lastDepth = depth
 
 
-                col = easeInOutExpo((slope + 1) / 2) * 150
-                if (depth > lightHeight)  col += 100
+                col = easeInOutExpo((slope + 1) / 2) * 100
+                if (depth > lightHeight) col += 150
+                col *= random(1, 1.5)
 
                 lightHeight = max(lightHeight, depth)
                 const distToLight = V(pos.x / gridHeight + .5, pos.y / gridWidth + .5).sub(lightPos).mag()
-                const lightStep = map(distToLight, 0, 1.6, .6, 0) * PS
+                const lightStep = map(distToLight, 0, 1.6, .5, -0.1) * PS
                 lightHeight -= lightStep
 
-                strokeWeight(depth / 127)
+                let alpha = 100
+                if (abs(pos2d.x) > 87) alpha *= map(abs(pos2d.x), 87, 90, 1, .5)
+                if (abs(pos2d.y) > 177) alpha *= map(abs(pos2d.y), 177, 180, 1, .5)
+
+                strokeWeight(PS * depth / 255)
                 stroke(lerp(pencilDarkColor[0], pencilBrightColor[0], col / 255),
                     lerp(pencilDarkColor[1], pencilBrightColor[1], col / 255),
-                    lerp(pencilDarkColor[2], pencilBrightColor[2], col / 255), 100)
-                line(pos.x+width, pos.y, pos.x+width, pos.y)
+                    lerp(pencilDarkColor[2], pencilBrightColor[2], col / 255), alpha)
+
+                    // line(pos.x + width, pos.y, pos.x + width, pos.y)
+                const drawPos = distortPos(pos)
+                line(drawPos.x + width, drawPos.y, drawPos.x + width, drawPos.y)
                 drawn = true
             } else {
                 lightHeight = null
@@ -106,10 +121,40 @@ async function makeImage() {
 
 
 function makeBackground() {
-    //circular gradient from center
-    const gradient = drawingContext.createRadialGradient(width/2, height/2, 0, width/2, height/2, width/2)
-    gradient.addColorStop(0, '#1a1a1a')
-    gradient.addColorStop(1, '#000000')
-    drawingContext.fillStyle = gradient
-    rect(0, 0, width, height)
+    background(paperColor[0], paperColor[1], paperColor[2])
+
+    if (random() < 0.5) {
+        fill(pencilDarkColor[0], pencilDarkColor[1], pencilDarkColor[2])
+        rect(30, 30, width - 60, height - 60)
+
+        for (let i = 0; i < 10; i++) {
+            const x = random(width)
+            const y = random(height)
+            const gradient = drawingContext.createRadialGradient(x, y, 0, x, y, random(width))
+            gradient.addColorStop(0, `#${num2hex(paperColor[0])}${num2hex(paperColor[1])}${num2hex(paperColor[2])}11`)
+            gradient.addColorStop(1, 'transparent')
+            drawingContext.fillStyle = gradient
+            rect(0, 0, width, height)
+        }
+    }
+
+    loadPixels()
+    for (let i = 0; i < pixels.length; i += 4) {
+        const r = random(-3, 3)
+        pixels[i] += r
+        pixels[i + 1] += r
+        pixels[i + 2] += r
+    }
+    updatePixels()
+}
+
+
+// turn a number between 0 and 255 into a 2-digit hex string
+function num2hex(n) {
+    return n.toString(16).padStart(2, '0')
+}
+
+function distortPos(pos) {
+    const newDist = pos.length * (1 + noise(pos.length / 100, pos.angle / 100) * .1 - .05)
+    return pointFromAngle(pos.angle, newDist)
 }
