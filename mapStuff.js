@@ -119,16 +119,16 @@ function drawMapNumber(lat, long, latDir, longDir, txt, txtSize = 5) {
 
 async function drawMapLine(lat1, long1, lat2, long2) {
     const l = dist(lat1, long1, lat2, long2)
-    const p = new Path()
+    const path = new Path()
     for (let i = 0; i < l; i += 1) {
         const lat = lerp(lat1, lat2, i / l)
         const long = lerp(long1, long2, i / l)
         const pos = projection.toPlane(lat, long)
         if (!pos) continue
         if (pos.x > 0.5 || pos.x < -0.5 || pos.y > 0.5 || pos.y < -0.5) continue
-        p.add(new Point(pos.x * gridWidth, pos.y * gridHeight))
+        path.add(new Point(pos.x * gridWidth + width, pos.y * gridHeight))
     }
-    await drawPath(p)
+    await drawPath(path)
 }
 
 

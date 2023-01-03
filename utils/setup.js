@@ -9,7 +9,7 @@ function initP5(webgl = false, ratio) {
         canvas = createCanvas(windowWidth, windowHeight, webgl ? 'webgl' : 'p2d');
     }
     setAttributes('willReadFrequently', true);
-    PS = width / 650
+    PS = width / 1000
     noiseSeed(round_random(1000))
     angleMode(DEGREES)
     V = createVector
@@ -24,4 +24,5 @@ function preload() {
 
 function initShaders() {
     swirlShader = loadShader('shaders/shader.vert', 'shaders/swirl.frag')
+    voronoiShader = loadShader('shaders/shader.vert', 'shaders/voronoi.frag')
 }

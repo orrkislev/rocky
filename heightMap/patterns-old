@@ -1,49 +1,111 @@
 function createHeightMap() {
-    let c_map = createGraphics(round(height), round(height / 2))
-    c_map.background(random(50, 120))
+    let c_map = createGraphics(width, round(width / 2))
+    c_map.noStroke()
     const mapSize = p(c_map.width, c_map.height)
     const scaler = mapSize.x / 100
+    const c_size = scaler * random(2, 20)
 
+    
     const pointGenerator = new PointGenerator(mapSize.x, mapSize.y)
     const pathCreator = new PathCreator(mapSize.x, mapSize.y)
     const painter = new Painter(c_map)
 
-    const mapType = choose([0, 1, 2, 3, 4])
+    const mapType = 0//choose([0, 1, 2, 3, 6, 7])
 
     if (mapType == 0) {
-        console.time('0 - circles')
+        console.time('0 - random circles')
+        c_map.background(127)
+        // c_map.noStroke()
+        
         const sumCircles = random(100, 2000)
-        const ct = choose([0,1,2])
         for (let i = 0; i < sumCircles; i++) {
-            if (ct == 0) painter.drawCircle(pointGenerator.getPoint(), scaler * random(1, 10))
-            if (ct == 1) painter.hole(pointGenerator.getPoint(), scaler * random(.5, 4))
-            if (ct == 2) painter.crater(pointGenerator.getPoint(), scaler * random(.5, 4))
+            // painter.drawCircle(pointGenerator.getPoint(), c_size * random(.1, .5))
+            painter.crater(pointGenerator.getPoint(), c_size * random(.1, .5))
+            // fillShape(c_map, new Circle(randomIn(mapSize), random(c_size)), null, 255, random(30, 100), random(scaler * 2))
+            // fillShape(c_map, new Circle(randomIn(mapSize), random(c_size)), null, 0, random(30, 100))
         }
-        console.timeEnd('0 - circles')
+        console.timeEnd('0 - random circles')
 
     } else if (mapType == 1) {
-        console.time('1 - lines')
+        console.time('1 - craters')
+        c_map.background(127)
+        for (let i = 0; i < 500; i++) {
+            const radius = c_size * random(.05, .3)
+            const shape = new Circle(randomIn(mapSize), radius).wonky(.5, 1.6)
+
+            fillShape(c_map, shape, p(scaler * 2, scaler * 2), 255, random(100, 255), random(scaler, scaler * 4))
+            fillShape(c_map, shape.offset(-scaler, true), null, 0, random(100, 255), random(scaler * 2))
+        }
+        console.timeEnd('1 - craters')
+
+    } else if (mapType == 2) {
+        console.time('2 - lines')
+        c_map.background(50)
+        c_map.noFill()
         for (let i = 0; i < 1000; i++) {
             path = pathCreator.createPath(pointGenerator.getPoint())
             painter.drawLine(path)
             path.remove()
-        }
-        console.timeEnd('1 - lines')
 
-    } else if (mapType == 2) {
-        console.time('2 - voronoi')
-        if (!shaderGraphics) shaderGraphics = createGraphics(c_map.width, c_map.height, WEBGL)
-        shaderGraphics.noStroke()
-        shaderGraphics.shader(voronoiShader)
-        voronoiShader.setUniform('resolution', [c_map.width, c_map.height])
-        voronoiShader.setUniform('seed', random(1000))
-        voronoiShader.setUniform('scale', random(.4, 1.5))
-        shaderGraphics.rect(0, 0, c_map.width, c_map.height)
-        c_map.image(shaderGraphics, 0, 0, c_map.width, c_map.height)
-        console.timeEnd('2 - voronoi')
+            // c_map.drawingContext.filter = `blur(${scaler * random(2, 6)}px)`
+            // c_map.stroke(255, 200)
+            // c_map.strokeWeight(scaler * random(2))
+            // fillShape(c_map, path)
+            // c_map.drawingContext.filter = `blur(${random(scaler * 2)}px)`
+            // c_map.strokeWeight(scaler * random())
+            // c_map.stroke(random() < b2lThreshold ? 0 : 255, random(50, 150))
+            // fillShape(c_map, path)
+        }
+        console.timeEnd('2 - lines')
 
     } else if (mapType == 3) {
-        console.time('3 - noise')
+        console.time('3 - hexagons')
+        const sampler = new HexagonGridSampler(mapSize.x, mapSize.y)
+        c_map.background(255)
+        for (let i = 0; i < 1000; i++) {
+            const pos = sampler.sample()
+            hole(c_map, pos, sampler.r * random(.1, .5))
+        }
+        console.timeEnd('3 - hexagons')
+
+    } else if (mapType == 4) {
+        console.time('4 - grid')
+        c_map.background(127)
+        const cellSize = scaler * random(2, 10)
+        c_map.loadPixels()
+        for (let y = 0; y < mapSize.y; y++) {
+            for (let x = 0; x < mapSize.x; x++) {
+                const vx = easeInOutExpo(1 - (x % cellSize) / cellSize)
+                const vy = easeInOutExpo(1 - (y % cellSize) / cellSize)
+                c_map.set(x, y, vx * 127 + vy * 127)
+            }
+        }
+        c_map.updatePixels()
+        console.timeEnd('4 - grid')
+
+    } else if (mapType == 5) {
+        console.time('5 - voronoi')
+        c_map.background(30)
+        const areas = Array(round_random(20, 150)).fill().map(_ => ({ pos: p(mapSize.x * random(-.2, 1.2), mapSize.y * random(-.2, 1.2)), clr: random(2), d: 0 }))
+        const thickness = scaler * random(.5, 4)
+        c_map.loadPixels()
+        for (let y = 0; y < mapSize.y; y++) {
+            for (let x = 0; x < mapSize.x; x++) {
+                const pos = p(x, y)
+                areas.forEach(area => area.d = pos.getDistance(area.pos))
+                const ordered = areas.sort((a, b) => a.d < b.d ? -1 : 1)
+
+                const n = 255 - noise(x / 100, y / 100) * 80
+                let cc = ordered[1].d - ordered[0].d
+                if (cc < thickness) c_map.set(x, y, smoothMap(cc, 0, thickness, n, 127))
+                else c_map.set(x, y, ordered[0].d * ordered[0].clr)
+            }
+        }
+        c_map.updatePixels()
+        console.timeEnd('5 - voronoi')
+
+    } else if (mapType == 6) {
+        console.time('6 - noise')
         c_map.loadPixels()
         const ratioNoiseScale = random(4)
         const ratioForce = random(5)
@@ -60,10 +122,26 @@ function createHeightMap() {
             }
         }
         c_map.updatePixels()
-        console.timeEnd('3 - noise')
-
-    } else if (mapType == 4) {
-        console.time('4 - circle packing')
+        console.timeEnd('6 - noise')
+    } else if (mapType == 7) {
+        c_map.background(50)
+        c_map.noFill()
+        const noiseScale = random(10, 200)
+        for (let x = 1; x < mapSize.x * 1.1; x += scaler * 2) {
+            for (let y = 1; y < mapSize.y * 1.1; y += scaler * 2) {
+                const path = new Path()
+                let pos = p(x, y)
+                while (pos.x > -mapSize.x * .01 && pos.x < mapSize.x * 1.1 && pos.y > -mapSize.y * .1 && pos.y < mapSize.y * 1.1 && path.length < 400) {
+                    const a = noise(pos.x / noiseScale, pos.y / noiseScale) * 360
+                    pos = pos.add(pointFromAngle(a, 5))
+                    path.add(pos)
+                }
+                path.smooth()
+                fillShape(c_map, path, null, 255, null, random(scaler * 7))
+            }
+        }
+    } else if (mapType == 8) {
+        console.time('8 - circle packing')
         c_map.background(50)
         circles = []
         const noiseScale = random(30, 200)
@@ -99,7 +177,7 @@ function createHeightMap() {
             c_map.fill(255, random(255))
             c_map.circle(crcl.pos.x, crcl.pos.y, crcl.r)
         })
-        console.timeEnd('4 - circle packing')
+        console.timeEnd('8 - circle packing')
     }
 
     // smearPath = new Path([
@@ -165,7 +243,6 @@ class Painter {
     drawCircle(pos, r) {
         const shape = new Circle(pos, r)
         this.drawLine(shape)
-        shape.remove()
     }
 
     hole(pos, r) {
@@ -175,15 +252,14 @@ class Painter {
         this.img.circle(pos.x, pos.y, r / 2)
     }
 
-    crater(pos, r) {
+    crater(pos,r) {
         const shape = new Circle(pos, r).wonky(.5, 1.6)
 
         this.img.noStroke()
-        this.img.drawingContext.filter = `blur(${this.scaler * random(1, 4)}px)`
+        this.img.drawingContext.filter = `blur(${this.scaler * random(1,4)}px)`
         this.img.fill(255, random(100, 255))
-        this.drawPath(shape, p(this.scaler * 2, this.scaler * 2))
+        this.drawPath(shape,p(this.scaler * 2, this.scaler * 2))
         this.img.fill(0, random(100, 255))
-        shape.remove()
     }
 }
 

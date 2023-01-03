@@ -202,6 +202,20 @@ const doubleAzimuthalProjection = {
 
 const azimuthalEqualAreaProjection = {
     name: 'azimuthalEqualArea',
+    toPlane: (lat, lon) => {
+        const phi = radians(lat),
+            lambda = radians(lon)
+        var z = sqrt(phi * phi + lambda * lambda),
+            c = 2 * asin(z / 2),
+            sc = sin(c),
+            cc = cos(c);
+        let x = atan2(phi * sc, z * cc),
+            y = asin(z && lambda * sc / z)
+        x = map(x, -pi, pi, -.5, .5)
+        y = map(y, -halfPi, halfPi, -.4, .4)
+        return new Point(x, y)
+    },
+
     toSphere: (origx, origy) => {
         const x = map(origx, -.5, .5, -pi, pi)
         const y = map(origy, -.4, .4, -halfPi, halfPi)

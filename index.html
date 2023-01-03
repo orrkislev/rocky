@@ -5,6 +5,7 @@
     //---- do not edit the following code (you can indent as you wish)
     let alphabet = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ"
     var fxhash = "oo" + Array(49).fill(0).map(_=>alphabet[(Math.random()*alphabet.length)|0]).join('')
+    // fxhash = "oojJfZSyq7ZJ9a6YEuesXwTsrWubkv6AbwD5J2iAMBF452BGz24"
     let b58dec = str=>[...str].reduce((p,c)=>p*alphabet.length+alphabet.indexOf(c)|0, 0)
     let fxhashTrunc = fxhash.slice(2)
     let regex = new RegExp(".{" + ((fxhashTrunc.length/4)|0) + "}", 'g')
@@ -44,9 +45,12 @@
   <script language="javascript" type="text/javascript" src="./heightMap/patterns.js"></script>
   <script language="javascript" type="text/javascript" src="./heightMap/deformation.js"></script>
   <script language="javascript" type="text/javascript" src="./heightMap/elements.js"></script>
+  <script language="javascript" type="text/javascript" src="./heightMap/lines.js"></script>
 
   <script language="javascript" type="text/javascript" src="./heightMapShader.js"></script>
   <script language="javascript" type="text/javascript" src="./shaders/shaderHelpers.js"></script>
+
+  <script language="javascript" type="text/javascript" src="./mapStuff.js"></script>
 </head>
 
 <style>

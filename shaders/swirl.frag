@@ -40,14 +40,3 @@ void main() {
   vec4 col = texture2D(texture, p2/resolution);
   gl_FragColor = col;
 }
-
-
-// this is the code from the original js
-
-// const rotation = ammount * (1 - easeOutQuad(d / r))
-// const relPos = mapPos.subtract(pos).rotate(rotation)
-// const p2 = pos.add(relPos)
-// const c2 = img.get(
-//     constrain(p2.x, 0, c.width - 1),
-//     constrain(p2.y, 0, c.height - 1))
-// c.set(x, y, c2)
