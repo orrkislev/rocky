@@ -46,12 +46,12 @@ float Voronoi(in vec2 p){
 
 void main(){
     vec2 uv = vTexCoord.xy;
-    uv.y *= 2.;
-    uv *= (.7 + length(uv)*.8);
+    uv.y *= .5;
+    uv *= (.5 + length(uv)*1.3);
     uv *= scale;
     
     float c = Voronoi(uv*5.);
-    vec3 col = vec3(c*1.2);
+    vec3 col = vec3(c);
 
 	gl_FragColor = vec4(sqrt(col), 1.); 
 }

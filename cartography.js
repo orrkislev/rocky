@@ -3,9 +3,9 @@ paperColors = [[245, 245, 220], [239, 208, 184], [219, 206, 160], [234, 234, 234
 function setup() {
     initP5(false, 9 / 16)
 
-    backgroundColor = 127
+    backgroundColor = choose(paperColors)
     paperColor = ([255, 215, 200]).sort(() => random() - .5)
-    paperColor = [255,255,255]
+    paperColor = [255, 255, 255]
     pencilDarkColor = [0, 0, 0]
     pencilBrightColor = paperColor
     makeImage()
@@ -103,8 +103,8 @@ async function makeImage() {
                 lightHeight -= lightStep
 
                 let alpha = 150
-                if (abs(pos2d.x) > 80) alpha *= map(abs(pos2d.x), 87, 90, 1, 0)
-                if (abs(pos2d.y) > 170) alpha *= map(abs(pos2d.y), 177, 180, 1, 0)
+                // if (abs(pos2d.x) > 80) alpha *= map(abs(pos2d.x), 87, 90, 1, 0)
+                // if (abs(pos2d.y) > 170) alpha *= map(abs(pos2d.y), 177, 180, 1, 0)
 
                 col = constrain(col, 0, 255)
                 strokeWeight(PS * (depth / 255 + 1))
@@ -132,39 +132,37 @@ async function makeImage() {
 
 
 function makeBackground() {
-    background(backgroundColor)
-    // background(paperColor[0], paperColor[1], paperColor[2])
+    background(220)
+    // background(pencilDarkColor[0], pencilDarkColor[1], pencilDarkColor[2])
 
-    // if (random() < .5) {
-    //     fill(pencilDarkColor[0], pencilDarkColor[1], pencilDarkColor[2])
+    // fill(pencilDarkColor[0], pencilDarkColor[1], pencilDarkColor[2])
+    fill(backgroundColor)
+    noStroke()
+    rect(20, 20, width - 40, height - 40, 2)
 
-    //     if (random() < .5) {
-    //         rect(width / 2 - gridWidth / 2 - gridWidth * .05, 30, gridWidth * 1.1, height - 60, 2)
-    //     } else {
-    //         rect(30, height / 2 - gridHeight / 2 - gridHeight * 0.05, width - 60, gridHeight * 1.1, 2)
-    //     }
-    //     // rect(-gridWidth/2, -gridHeight/2, gridWidth, gridHeight)
+    // const paperColorHex = `#${num2hex(paperColor[0])}${num2hex(paperColor[1])}${num2hex(paperColor[2])}`
+    const paperColorHex = `#${num2hex(pencilDarkColor[0])}${num2hex(pencilDarkColor[1])}${num2hex(pencilDarkColor[2])}`
 
-    //     const paperColorHex = `#${num2hex(paperColor[0])}${num2hex(paperColor[1])}${num2hex(paperColor[2])}`
-    //     for (let i = 0; i < 10; i++) {
-    //         const x = random(width)
-    //         const y = random(height)
-    //         const gradient = drawingContext.createRadialGradient(x, y, 0, x, y, random(width))
-    //         gradient.addColorStop(0, paperColorHex + '11')
-    //         gradient.addColorStop(1, paperColorHex + '00')
-    //         drawingContext.fillStyle = gradient
-    //         rect(0, 0, width, height)
-    //     }
-    // }
+    for (let i = 0; i < 10; i++) {
+        const x = random(width)
+        const y = random(height)
+        const gradient = drawingContext.createRadialGradient(x, y, 0, x, y, random(width))
+        gradient.addColorStop(0, paperColorHex + '11')
+        gradient.addColorStop(1, paperColorHex + '00')
+        drawingContext.fillStyle = gradient
+        rect(0, 0, width, height)
+    }
 
-    // loadPixels()
-    // for (let i = 0; i < pixels.length; i += 4) {
-    //     const r = random(-3, 3)
-    //     pixels[i] += r
-    //     pixels[i + 1] += r
-    //     pixels[i + 2] += r
-    // }
-    // updatePixels()
+    let x = 0
+    loadPixels()
+    for (let i = 0; i < pixels.length; i += 4) {
+        x++
+        const n = noise(x / 100, i / 100) * 10 - 5
+        pixels[i] += n
+        pixels[i + 1] += n
+        pixels[i + 2] += n
+    }
+    updatePixels()
 }
 
 
@@ -174,6 +172,6 @@ function num2hex(n) {
 }
 
 function distortPos(pos) {
-    const newDist = pos.length * (1 + noise(pos.length / 100, pos.angle / 100) * .1 - .05)
+    const newDist = pos.length * (1 + noise(pos.length / 100, pos.angle / 100) * .15 - .075)
     return pointFromAngle(pos.angle, newDist)
 }

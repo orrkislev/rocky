@@ -138,8 +138,8 @@ const vanDerGrintenProjection = {
         let lat = sy * halfPi * B
         lat = map(lat, -halfPi, halfPi, -90, 90)
         lon = map(lon, -pi, pi, -180, 180)
+        if (!lat || !lon) return null
         if (abs(lat) > 90 || abs(lon) > 180) return null
-        if (!lat && !lon) return new Point(origy, origx)
         return new Point(lat, lon);
     }
 }
@@ -173,7 +173,7 @@ const naturalEarthProjection = {
             lat = phi
         lat = map(lat, -halfPi, halfPi, -90, 90)
         lon = map(lon, -pi, pi, -180, 180)
-        // if (abs(lat) > 90 || abs(lon) > 180) return null
+        if (abs(lat) > 90 || abs(lon) > 180) return null
         return new Point(lat, lon);
     }
 }

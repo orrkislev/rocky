@@ -4,46 +4,39 @@ function createHeightMap() {
     const mapSize = p(c_map.width, c_map.height)
     const scaler = mapSize.x / 100
 
-    const pointGenerator = new PointGenerator(mapSize.x, mapSize.y)
-    const pathCreator = new PathCreator(mapSize.x, mapSize.y)
-    const painter = new Painter(c_map)
+    const mapType = choose([0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3])
 
-    const mapType = choose([0, 1, 2, 3, 4])
+    if (mapType == 0 || mapType == 1) {
+        const pathCreator = new PathCreator(mapSize.x, mapSize.y)
+        const pointGenerator = new PointGenerator(mapSize.x, mapSize.y)
+        const painter = new Painter(c_map)
 
-    if (mapType == 0) {
-        console.time('0 - circles')
-        const sumCircles = random(100, 2000)
-        const ct = choose([0,1,2])
-        for (let i = 0; i < sumCircles; i++) {
-            if (ct == 0) painter.drawCircle(pointGenerator.getPoint(), scaler * random(1, 10))
-            if (ct == 1) painter.hole(pointGenerator.getPoint(), scaler * random(.5, 4))
-            if (ct == 2) painter.crater(pointGenerator.getPoint(), scaler * random(.5, 4))
+        if (mapType == 0) {
+            console.time('0 - circles')
+            const sumCircles = random(100, 2000)
+            const ct = choose([0, 1, 2])
+            for (let i = 0; i < sumCircles; i++) {
+                if (ct == 0) painter.drawCircle(pointGenerator.getPoint(), scaler * random(1, 10))
+                if (ct == 1) painter.hole(pointGenerator.getPoint(), scaler * random(.5, 4))
+                if (ct == 2) painter.crater(pointGenerator.getPoint(), scaler * random(.5, 4))
+            }
+            console.timeEnd('0 - circles')
+
+        } else if (mapType == 1) {
+            console.time('1 - lines')
+            const numLines = random(200, 1000)
+            for (let i = 0; i < numLines; i++) {
+                path = pathCreator.createPath(pointGenerator.getPoint())
+                painter.drawLine(path)
+                path.remove()
+            }
+            console.timeEnd('1 - lines')
         }
-        console.timeEnd('0 - circles')
 
-    } else if (mapType == 1) {
-        console.time('1 - lines')
-        for (let i = 0; i < 1000; i++) {
-            path = pathCreator.createPath(pointGenerator.getPoint())
-            painter.drawLine(path)
-            path.remove()
-        }
-        console.timeEnd('1 - lines')
 
+        
     } else if (mapType == 2) {
-        console.time('2 - voronoi')
-        if (!shaderGraphics) shaderGraphics = createGraphics(c_map.width, c_map.height, WEBGL)
-        shaderGraphics.noStroke()
-        shaderGraphics.shader(voronoiShader)
-        voronoiShader.setUniform('resolution', [c_map.width, c_map.height])
-        voronoiShader.setUniform('seed', random(1000))
-        voronoiShader.setUniform('scale', random(.4, 1.5))
-        shaderGraphics.rect(0, 0, c_map.width, c_map.height)
-        c_map.image(shaderGraphics, 0, 0, c_map.width, c_map.height)
-        console.timeEnd('2 - voronoi')
-
-    } else if (mapType == 3) {
-        console.time('3 - noise')
+        console.time('2 - noise')
         c_map.loadPixels()
         const ratioNoiseScale = random(4)
         const ratioForce = random(5)
@@ -60,47 +53,21 @@ function createHeightMap() {
             }
         }
         c_map.updatePixels()
-        console.timeEnd('3 - noise')
+        console.timeEnd('2 - noise')
 
-    } else if (mapType == 4) {
-        console.time('4 - circle packing')
-        c_map.background(50)
-        circles = []
-        const noiseScale = random(30, 200)
-        for (let i = 0; i < 2500; i++) {
-            let tries = 0
-            while (tries++ < 1000) {
-                const pos = p(random(mapSize.x), random(mapSize.y))
-                if (noise(pos.x / noiseScale, pos.y / noiseScale) < .5) continue
-                let goodCircle = true
-                let r = 0
-                for (const crcl of circles) {
-                    const d = pos.getDistance(crcl.pos)
-                    if (d < crcl.r) {
-                        goodCircle = false
-                        break
-                    }
-                    r = max(r, d - crcl.r)
-                    r = min(r, 30)
-                }
-                if (goodCircle) {
-                    circles.push({ pos, r: r * random(.5) })
-                    break
-                }
-            }
-            if (tries == 100) break
-        }
-        circles.forEach(crcl => {
-            c_map.noStroke()
-            c_map.drawingContext.filter = `blur(${random(scaler * 2)}px)`
-            c_map.fill(255, random(255))
-            c_map.circle(crcl.pos.x, crcl.pos.y, crcl.r)
-            c_map.drawingContext.filter = `blur(${random(scaler)}px)`
-            c_map.fill(255, random(255))
-            c_map.circle(crcl.pos.x, crcl.pos.y, crcl.r)
-        })
-        console.timeEnd('4 - circle packing')
+    } else if (mapType == 3) {
+        console.time('3 - voronoi')
+        if (!shaderGraphics) shaderGraphics = createGraphics(c_map.width, c_map.height, WEBGL)
+        shaderGraphics.noStroke()
+        shaderGraphics.shader(voronoiShader)
+        voronoiShader.setUniform('resolution', [c_map.width, c_map.height])
+        voronoiShader.setUniform('seed', random(1000))
+        voronoiShader.setUniform('scale', random(.4, 1.5))
+        shaderGraphics.rect(0, 0, c_map.width, c_map.height)
+        c_map.image(shaderGraphics, 0, 0, c_map.width, c_map.height)
+        console.timeEnd('3 - voronoi')
     }
+
 
     // smearPath = new Path([
     //     p(0.1 * mapSize.x, 0.2 * mapSize.y),
