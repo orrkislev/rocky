@@ -56,12 +56,13 @@ class PathCreator {
 
 
 class PointGenerator {
-    constructor(w, h) {
-        this.generatorType = choose(Object.values(PointGenerator.generatorTypes))
+    constructor(w, h, generatorType, data){
+        this.generatorType = generatorType ||choose(Object.values(PointGenerator.generatorTypes))
         this.w = w; this.h = h
 
         this.generatorType.init(this)
         print('points', this.generatorType.name)
+        if (data) this.data = data
     }
     getPoint() {
         return this.generatorType.getPoint(this)
@@ -77,30 +78,30 @@ class PointGenerator {
         grid: {
             name: 'grid',
             init: (pointGenerator) => {
-                pointGenerator.gridSize = pointGenerator.w * random(.02, .1)
+                pointGenerator.data = pointGenerator.w * random(.02, .1)
             },
             getPoint: (pointGenerator) => {
-                let y = round_random(0, pointGenerator.h / pointGenerator.gridSize)
-                let x = round_random(0, pointGenerator.w / pointGenerator.gridSize)
-                return p(x * pointGenerator.gridSize, y * pointGenerator.gridSize)
+                let y = round_random(0, pointGenerator.h / pointGenerator.data)
+                let x = round_random(0, pointGenerator.w / pointGenerator.data)
+                return p(x * pointGenerator.data, y * pointGenerator.data)
             }
         },
         hexGrid: {
             name: 'hex grid',
             init: (pointGenerator) => {
-                pointGenerator.gridSize = pointGenerator.w * random(.02, .1)
+                pointGenerator.data = pointGenerator.w * random(.02, .1)
             },
             getPoint: (pointGenerator) => {
-                let y = round_random(0, pointGenerator.h / pointGenerator.gridSize)
-                let x = round_random(0, pointGenerator.w / pointGenerator.gridSize)
+                let y = round_random(0, pointGenerator.h / pointGenerator.data)
+                let x = round_random(0, pointGenerator.w / pointGenerator.data)
                 if (y % 2 == 0) x -= .5
-                return p(x * pointGenerator.gridSize, y * pointGenerator.gridSize)
+                return p(x * pointGenerator.data, y * pointGenerator.data)
             }
         },
         distribution: {
             name: 'distribution',
             init: (pointGenerator) => {
-                pointGenerator.r = pointGenerator.w * random(.1, .5)
+                pointGenerator.data = pointGenerator.w * random(.1, .5)
                 pointGenerator.points = []
             },
             getPoint: (pointGenerator) => {
@@ -112,7 +113,7 @@ class PointGenerator {
                 while (tries < 100) {
                     const pos = p(random(pointGenerator.w), random(pointGenerator.h))
                     for (const pos2 of pointGenerator.points) {
-                        if (pos.getDistance(pos2) < pointGenerator.r) {
+                        if (pos.getDistance(pos2) < pointGenerator.data) {
                             tries++
                             continue
                         }

@@ -51,7 +51,7 @@ function footPrint(img) {
 function ammonite(img, pos, maxr) {
     const c = createGraphics(img.width, img.height)
 
-    const revolutions = random(2,5)
+    const revolutions = random(2, 5)
     const spiralPath = new Path()
     for (let r = 0; r < maxr; r += 2) {
         const a = map(r, 0, maxr, 0, 360 * revolutions)
@@ -74,4 +74,24 @@ function ammonite(img, pos, maxr) {
 
     img.image(c, 0, 0)
     img.resetMatrix()
+}
+
+function bush(img, pos, r) {
+    const bushImg = createGraphics(img.width, img.height)
+    bushImg.translate(pos.x, pos.y)
+    for (let i = 0; i < 200; i++) {
+        const rot_z = random(180)
+        const rot = random(360)
+        const p2 = pointFromAngle(rot, cos(rot_z) * r)
+        const h = abs(sin(rot_z) * r)
+        const d = p2.getDistance(p(0, 0))
+        for (let j = 0; j < d; j++) {
+            const x = p2.x / d * j
+            const y = p2.y / d * j
+            const val = j / d
+            bushImg.stroke(255, val * 255)
+            bushImg.line(x, y, x, y)
+        }
+    }
+    img.image(bushImg, 0, 0)
 }

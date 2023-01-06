@@ -13,9 +13,9 @@ function createHeightMap() {
 
         if (mapType == 0) {
             console.time('0 - circles')
-            const sumCircles = random(100, 2000)
-            const ct = choose([0, 1, 2])
+            const sumCircles = random(100, 1000)
             for (let i = 0; i < sumCircles; i++) {
+                const ct = choose([0, 1, 2])
                 if (ct == 0) painter.drawCircle(pointGenerator.getPoint(), scaler * random(1, 10))
                 if (ct == 1) painter.hole(pointGenerator.getPoint(), scaler * random(.5, 4))
                 if (ct == 2) painter.crater(pointGenerator.getPoint(), scaler * random(.5, 4))
@@ -34,7 +34,7 @@ function createHeightMap() {
         }
 
 
-        
+
     } else if (mapType == 2) {
         console.time('2 - noise')
         c_map.loadPixels()
@@ -66,6 +66,23 @@ function createHeightMap() {
         shaderGraphics.rect(0, 0, c_map.width, c_map.height)
         c_map.image(shaderGraphics, 0, 0, c_map.width, c_map.height)
         console.timeEnd('3 - voronoi')
+    } else if (mapType == 4) {
+        const scale = scaler * random(5, 15)
+        smallCircle = createGraphics(scale * 2, scale * 2)
+        smallCircle.drawingContext.filter = `blur(${scale / 2}px)`
+        smallCircle.fill(255, 150)
+        smallCircle.noStroke()
+        smallCircle.circle(50, 50, 50)
+
+        c_map.imageMode(CENTER)
+        const pointGenerator = new PointGenerator(mapSize.x, mapSize.y, PointGenerator.generatorTypes.distribution, scale * 2)
+        const numPoints = random(100, 1000)
+        for (let i = 0; i < numPoints; i++) {
+            c_map.tint(255, random(255))
+            const r = random(scale, scale * 2)
+            const pos = pointGenerator.getPoint()
+            c_map.image(smallCircle, pos.x, pos.y, r, r)
+        }
     }
 
 
@@ -79,15 +96,17 @@ function createHeightMap() {
     // smearPath.smooth()
     // // s_map = smear(c_map, smearPath, 100, 30)
     console.time('deformations')
-    if (random() < 0.5) c_map = swirl(c_map, p(random(mapSize.x), random(mapSize.y)), random(300) * sign(random(-1, 1)), random(mapSize.x / 4))
+    for (let i = 1; i < 4; i++)
+        if (random() < .5) c_map = swirl(c_map, p(random(mapSize.x), random(mapSize.y)), random(100 * i) * sign(random(-1, 1)), random(mapSize.x / 4))
     console.timeEnd('deformations')
 
 
-    // console.time('elements')
+    console.time('elements')
     // s_map = tracks(s_map, new Path([p(0, 0), p(mapSize.x, mapSize.y)]), 100, 30)
     // for (let i = 0; i < 3; i++) ammonite(c_map, randomIn(mapSize), random(10, 50))
     // footPrint(s_map)
-    // console.timeEnd('elements')
+    for (let i = 0; i < 3; i++) bush(c_map, randomIn(mapSize), random(10, 50))
+    console.timeEnd('elements')
 
     return c_map
 }
@@ -116,15 +135,15 @@ class Painter {
     }
 
     drawLine(path) {
-        if (this.getFill()) {
+        if (path.length > this.img.width / 10 && this.getFill()) {
             this.img.noStroke()
+            const alpha = 
             this.img.fill(this.getColor(), this.getAlpha())
         } else {
             this.img.stroke(this.getColor(), this.getAlpha())
             this.img.strokeWeight(this.scaler * random())
             this.img.noFill()
         }
-
         this.img.drawingContext.filter = `blur(${this.getBlur()}px)`
         this.drawPath(path)
     }
@@ -199,7 +218,6 @@ function createNormalMap(heightMap) {
         }
     }
     normalMap.updatePixels()
-    image(normalMap, 0, 0, width, height)
     return normalMap
 }
 

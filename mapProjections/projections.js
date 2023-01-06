@@ -180,6 +180,7 @@ const naturalEarthProjection = {
 
 const doubleAzimuthalProjection = {
     name: 'doubleAzimuthal',
+    ratio:2,
     toPlane: (lat, lon) => {
         if (lon == 0) return null
         let y = map(lat, -90, 90, -1, 1)
@@ -190,11 +191,13 @@ const doubleAzimuthalProjection = {
     toSphere: (x, y) => {
         x *= 2
         y *= 2
-        let lat = map(y, -1, 1, -90, 90)
-        let w = sqrt(1 - abs(y) ** 2) / 2
+        // let lat = map(y, -1, 1, -90, 90)
+        const lat = y * 90
+        const w = sqrt(1 - abs(y) ** 2) / 2
         let lon = 200
         lon = map(abs(x), .5 - w, .5 + w, 0, 180)
         if (lon > 180 || lon < 0) return null
+        if (abs(lat) > 90 || abs(lon) > 180) return null
         lon *= sign(x)
         return new Point(lat, lon);
     }
