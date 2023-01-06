@@ -76,6 +76,8 @@ async function makeImage() {
             color: choose(ribbonColors)
         }
         ribbon.path.smooth()
+        ribbon.path.lastSegment.handleIn = ribbon.path.lastSegment.handleIn.rotate(random(-45,45))
+        ribbon.path.firstSegment.handleOut = ribbon.path.firstSegment.handleOut.rotate(random(-45,45))
         ribbon.mask = createGraphics(width, height)
         ribbon.mask.strokeWeight(ribbon.width / 2)
         for (let i = 0; i < ribbon.path.length; i++) {
@@ -140,8 +142,8 @@ async function makeImage() {
             }
             if (ribbon) {
                 const inRibbonMask = ribbon.mask.get(pos.x + width / 2, pos.y + height / 2)[3] > 0
-                if (inRibbonMask){
-                // if (ribbon.path.getNearestPoint(pos).getDistance(pos) < ribbon.width / 2) {
+                if (inRibbonMask) {
+                    // if (ribbon.path.getNearestPoint(pos).getDistance(pos) < ribbon.width / 2) {
                     brightColor = ribbon.color
                     // darkColor = goldColors[1]
                     depth = lerp(lastDepth, depth + 60, .5)
