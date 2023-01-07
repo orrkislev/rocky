@@ -4,6 +4,10 @@ ribbonColors = [[255, 71, 55], [210, 186, 92]]
 
 const toColor = (colorArray) => color(colorArray[0], colorArray[1], colorArray[2])
 
+let onMap, brightColor, depth, col, slope
+let lightHeight, hitMap, lastDepth, pos
+let slopeMultiplier, ribbon
+
 function setup() {
     initP5(false, 9 / 16)
 
@@ -73,8 +77,7 @@ async function makeImage() {
     console.time('draw relief')
     translate(-width / 2, height / 2)
 
-    let ribbon = null
-    if (random() < 0.5 && false) {
+    if (random() < 0.5) {
         ribbon = {
             path: new Path([p(gridWidth * random(-.5, .5), -gridHeight / 2), p(random(-100, 100), 0), p(gridWidth * random(-.5, .5), gridHeight / 2)]),
             width: random(20, 100),
@@ -89,45 +92,83 @@ async function makeImage() {
             const pos = ribbon.path.getPointAt(i)
             ribbon.mask.point(width / 2 + pos.x, height / 2 + pos.y)
         }
+        applyRibbon = () => {
+            const inRibbonMask = ribbon.mask.get(pos.x + width / 2, pos.y + height / 2)[3] > 0
+            if (inRibbonMask) {
+                brightColor = ribbon.color
+                depth = lerp(lastDepth, depth + 60, .5)
+                hitMap = true
+                onMap = true
+            }
+        }
     }
 
+    if (withLights) {
+        applyLights = () => {
+            if (depth > lightHeight) col += 200
+            // else if (withDeeperShadow) col -= lightHeight - depth
+
+            lightHeight = max(lightHeight, depth)
+            const distToLight = V(pos.x / gridHeight + .5, pos.y / gridWidth + .5).sub(lightPos).mag()
+            const lightStep = map(distToLight, 0, 2, 2, 1) * PS
+            lightHeight -= lightStep
+        }
+    }
+
+    if (renderType == 1) {
+        prepareRender = () => {
+            let finalColor = brightColor
+            if (col < 85) finalColor = pencilDarkColor
+            else if (col < 170) finalColor = choose(goldColors)
+            stroke(finalColor[0], finalColor[1], finalColor[2])
+        }
+        slopeMultiplier = 255
+    } else if (renderType == 2) {
+        prepareRender = () => {
+            stroke(lerp(pencilDarkColor[0], brightColor[0], col / 255),
+                lerp(pencilDarkColor[1], brightColor[1], col / 255),
+                lerp(pencilDarkColor[2], brightColor[2], col / 255))
+        }
+        slopeMultiplier = 30
+    }
+
+
+
+
+
+
+
     const lightPos = V(fillDir > 0 ? 0 : 1, 0)
-    // const offsetX = gridHeight * tan(90 - fillDir)
     const offsetX = height * tan(90 - fillDir)
-    // const startX = fillDir > 0 ? -gridWidth / 2 - offsetX : -gridWidth / 2
     const startX = fillDir > 0 ? -width / 2 - offsetX : -width / 2
-    // const endX = fillDir > 0 ? gridWidth / 2 : gridWidth / 2 - offsetX
     const endX = fillDir > 0 ? width / 2 : width / 2 - offsetX
     const moveX = Math.sign(fillDir) * cos(fillDir) / 2
     const moveY = Math.sign(fillDir) * sin(fillDir) / 2
-    times = []
-    lastTime = performance.now()
+    // times = []
+    // lastTime = performance.now()
     strokeWeight(PS * 2)
     for (let x = startX; x < endX; x += .5) {
-        let lightHeight = 0
-        let hitMap = false
-        let lastDepth = 0
-        // let pos = new Point(x, -gridHeight / 2)
-        let pos = new Point(x, -height / 2)
-        // while (pos.y < gridHeight / 2) {
+        lightHeight = 0
+        hitMap = false
+        lastDepth = 0
+        pos = new Point(x, -height / 2)
         while (pos.y < height / 2) {
-            const newTime = performance.now()
-            times.push(newTime - lastTime)
-            lastTime = newTime
+            // const newTime = performance.now()
+            // times.push(newTime - lastTime)
+            // lastTime = newTime
 
             pos.y += moveY
             pos.x += moveX
-            // if (pos.x < -gridWidth / 2 || pos.x > gridWidth / 2 || pos.y < -gridHeight / 2 || pos.y > gridHeight / 2) continue
             if (pos.x < -width / 2 || pos.x > width / 2 || pos.y < -height / 2 || pos.y > height / 2) continue
 
             const relX = pos.x / gridWidth
             const relY = pos.y / gridHeight
 
-            let onMap = false
-            let brightColor = pencilBrightColor
-            let depth = 0
-            let col = 0
-            let slope = 0
+            onMap = false
+            brightColor = pencilBrightColor
+            depth = 0
+            col = 0
+            slope = 0
 
             const pos2d = projection.toSphere(relY, relX)
             if (pos2d) {
@@ -138,48 +179,22 @@ async function makeImage() {
 
                 depth += noise(percX * 30, percY * 30) * 8 - 4
                 slope = depth - lastDepth
-                col = easeInOutExpo((slope + 1) / 2) * 255
+                col = easeInOutExpo((slope + 1) / 2) * slopeMultiplier
                 lastDepth = depth
                 hitMap = true
                 onMap = true
             }
-            if (ribbon) {
-                const inRibbonMask = ribbon.mask.get(pos.x + width / 2, pos.y + height / 2)[3] > 0
-                if (inRibbonMask) {
-                    brightColor = ribbon.color
-                    depth = lerp(lastDepth, depth + 60, .5)
-                    hitMap = true
-                    onMap = true
-                }
-            }
+            applyRibbon()
             if (!hitMap) continue
             if (!onMap && depth > lightHeight) continue
 
-            if (withLights) {
-                if (depth > lightHeight) col += 200
-                else if (withDeeperShadow) col -= lightHeight - depth
-
-                lightHeight = max(lightHeight, depth)
-                const distToLight = V(pos.x / gridHeight + .5, pos.y / gridWidth + .5).sub(lightPos).mag()
-                const lightStep = map(distToLight, 0, 2, 2, 1) * PS
-                lightHeight -= lightStep
-            }
-
+            applyLights()
 
             col = constrain(col, 0, 255)
 
             strokeWeight(PS * (depth / 255 + 1))
-            
-            if (renderType == 1) {
-                let finalColor = brightColor
-                if (col < 85) finalColor = pencilDarkColor
-                else if (col < 170) finalColor = choose(goldColors)
-                stroke(finalColor[0], finalColor[1], finalColor[2], 150)
-            } else if (renderType == 2) {
-                stroke(lerp(pencilDarkColor[0], brightColor[0], col / 255),
-                    lerp(pencilDarkColor[1], brightColor[1], col / 255),
-                    lerp(pencilDarkColor[2], brightColor[2], col / 255), 150)
-            }
+
+            prepareRender()
 
             const drawPos = distortPos(pos)
             line(drawPos.x + width, drawPos.y, drawPos.x + width, drawPos.y)
@@ -190,10 +205,14 @@ async function makeImage() {
 
     console.timeEnd('draw relief')
 
-    let allTimes = 0
-    times.forEach(t => allTimes += t)
-    print(allTimes / times.length)
+    // let allTimes = 0
+    // times.forEach(t => allTimes += t)
+    // print(allTimes / times.length)
 }
+
+function applyRibbon() { }
+function applyLights() { }
+function prepareRender() { }
 
 
 
