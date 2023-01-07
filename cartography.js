@@ -1,7 +1,8 @@
 backgroundColors = [[245, 245, 220], [239, 208, 184], [219, 206, 160], [234, 234, 234], [50, 50, 50]]
-// goldColors = [[194, 175, 80], [114, 84, 15], [210, 186, 92]]   [255, 230, 140]
+goldColors = [[194, 175, 80], [114, 84, 15], [210, 186, 92], [255, 230, 140]]
 ribbonColors = [[255, 71, 55], [210, 186, 92]]
 
+const toColor = (colorArray) => color(colorArray[0], colorArray[1], colorArray[2])
 
 function setup() {
     initP5(false, 9 / 16)
@@ -12,6 +13,10 @@ function setup() {
     pencilDarkColor = [0, 0, random() < 0.5 ? 0 : 50]
     pencilBrightColor = random() < 0.0 ? backgroundColor : [255, 255, 255]
     makeImage()
+
+    renderType = choose([1, 2])
+    withLights = random() < 0.5
+    withDeeperShadow = random() < 0.5
 }
 
 async function makeImage() {
@@ -69,15 +74,15 @@ async function makeImage() {
     translate(-width / 2, height / 2)
 
     let ribbon = null
-    if (random() < 0.5 || true) {
+    if (random() < 0.5 && false) {
         ribbon = {
             path: new Path([p(gridWidth * random(-.5, .5), -gridHeight / 2), p(random(-100, 100), 0), p(gridWidth * random(-.5, .5), gridHeight / 2)]),
             width: random(20, 100),
             color: choose(ribbonColors)
         }
         ribbon.path.smooth()
-        ribbon.path.lastSegment.handleIn = ribbon.path.lastSegment.handleIn.rotate(random(-45,45))
-        ribbon.path.firstSegment.handleOut = ribbon.path.firstSegment.handleOut.rotate(random(-45,45))
+        ribbon.path.lastSegment.handleIn = ribbon.path.lastSegment.handleIn.rotate(random(-45, 45))
+        ribbon.path.firstSegment.handleOut = ribbon.path.firstSegment.handleOut.rotate(random(-45, 45))
         ribbon.mask = createGraphics(width, height)
         ribbon.mask.strokeWeight(ribbon.width / 2)
         for (let i = 0; i < ribbon.path.length; i++) {
@@ -120,9 +125,7 @@ async function makeImage() {
 
             let onMap = false
             let brightColor = pencilBrightColor
-            let darkColor = pencilDarkColor
             let depth = 0
-            // let alpha = 150
             let col = 0
             let slope = 0
 
@@ -135,7 +138,7 @@ async function makeImage() {
 
                 depth += noise(percX * 30, percY * 30) * 8 - 4
                 slope = depth - lastDepth
-                col = easeInOutExpo((slope + 1) / 2) * 30
+                col = easeInOutExpo((slope + 1) / 2) * 255
                 lastDepth = depth
                 hitMap = true
                 onMap = true
@@ -143,32 +146,41 @@ async function makeImage() {
             if (ribbon) {
                 const inRibbonMask = ribbon.mask.get(pos.x + width / 2, pos.y + height / 2)[3] > 0
                 if (inRibbonMask) {
-                    // if (ribbon.path.getNearestPoint(pos).getDistance(pos) < ribbon.width / 2) {
                     brightColor = ribbon.color
-                    // darkColor = goldColors[1]
                     depth = lerp(lastDepth, depth + 60, .5)
                     hitMap = true
                     onMap = true
                 }
             }
             if (!hitMap) continue
-
-            if (depth > lightHeight) col += 200
-            // else col -= lightHeight-depth
             if (!onMap && depth > lightHeight) continue
 
-            lightHeight = max(lightHeight, depth)
-            const distToLight = V(pos.x / gridHeight + .5, pos.y / gridWidth + .5).sub(lightPos).mag()
-            const lightStep = map(distToLight, 0, 2, 2, 1) * PS
-            lightHeight -= lightStep
+            if (withLights) {
+                if (depth > lightHeight) col += 200
+                else if (withDeeperShadow) col -= lightHeight - depth
+
+                lightHeight = max(lightHeight, depth)
+                const distToLight = V(pos.x / gridHeight + .5, pos.y / gridWidth + .5).sub(lightPos).mag()
+                const lightStep = map(distToLight, 0, 2, 2, 1) * PS
+                lightHeight -= lightStep
+            }
+
 
             col = constrain(col, 0, 255)
-            strokeWeight(PS * (depth / 255 + 1))
-            stroke(lerp(darkColor[0], brightColor[0], col / 255),
-                lerp(darkColor[1], brightColor[1], col / 255),
-                lerp(darkColor[2], brightColor[2], col / 255), 150)
 
-            // line(pos.x + width, pos.y, pos.x + width, pos.y)
+            strokeWeight(PS * (depth / 255 + 1))
+            
+            if (renderType == 1) {
+                let finalColor = brightColor
+                if (col < 85) finalColor = pencilDarkColor
+                else if (col < 170) finalColor = choose(goldColors)
+                stroke(finalColor[0], finalColor[1], finalColor[2], 150)
+            } else if (renderType == 2) {
+                stroke(lerp(pencilDarkColor[0], brightColor[0], col / 255),
+                    lerp(pencilDarkColor[1], brightColor[1], col / 255),
+                    lerp(pencilDarkColor[2], brightColor[2], col / 255), 150)
+            }
+
             const drawPos = distortPos(pos)
             line(drawPos.x + width, drawPos.y, drawPos.x + width, drawPos.y)
         }

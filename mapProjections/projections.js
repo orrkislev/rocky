@@ -43,6 +43,7 @@ const cylindricProjection = {
     toSphere: (x, y) => {
         const lat = map(y, -.5, .5, -90, 90)
         const long = map(x, -.5, .5, -180, 180)
+        if (abs(lat) > 90 || abs(long) > 180) return null
         return new Point(lat, long)
     }
 }
