@@ -15,12 +15,14 @@ function setup() {
     paperColor = ([255, 215, 200]).sort(() => random() - .5)
     paperColor = [255, 255, 255]
     pencilDarkColor = [0, 0, random() < 0.5 ? 0 : 50]
-    pencilBrightColor = random() < 0.0 ? backgroundColor : [255, 255, 255]
+    pencilBrightColor = random() < 0.7 || (backgroundColor[0] < 100) ? [255, 255, 255] : backgroundColor
+
     makeImage()
 
     renderType = choose([1, 2])
-    withLights = random() < 0.5
+    withLights = random() < 0.8
     withDeeperShadow = random() < 0.5
+    withWallShadow = random() < 0.5
 }
 
 async function makeImage() {
@@ -132,16 +134,17 @@ async function makeImage() {
         slopeMultiplier = 30
     }
 
+    shouldFilterHits = withWallShadow ? () => !hitMap || (!onMap && depth > lightHeight) : () => !hitMap || !onMap
 
 
 
-
+    const drawArea = { width: withWallShadow ? width : gridWidth, height: withWallShadow ? height : gridHeight }
 
 
     const lightPos = V(fillDir > 0 ? 0 : 1, 0)
-    const offsetX = height * tan(90 - fillDir)
-    const startX = fillDir > 0 ? -width / 2 - offsetX : -width / 2
-    const endX = fillDir > 0 ? width / 2 : width / 2 - offsetX
+    const offsetX = drawArea.height * tan(90 - fillDir)
+    const startX = fillDir > 0 ? -drawArea.width / 2 - offsetX : -drawArea.width / 2
+    const endX = fillDir > 0 ? drawArea.width / 2 : drawArea.width / 2 - offsetX
     const moveX = Math.sign(fillDir) * cos(fillDir) / 2
     const moveY = Math.sign(fillDir) * sin(fillDir) / 2
     // times = []
@@ -151,15 +154,15 @@ async function makeImage() {
         lightHeight = 0
         hitMap = false
         lastDepth = 0
-        pos = new Point(x, -height / 2)
-        while (pos.y < height / 2) {
+        pos = new Point(x, -drawArea.height / 2)
+        while (pos.y < drawArea.height / 2) {
             // const newTime = performance.now()
             // times.push(newTime - lastTime)
             // lastTime = newTime
 
             pos.y += moveY
             pos.x += moveX
-            if (pos.x < -width / 2 || pos.x > width / 2 || pos.y < -height / 2 || pos.y > height / 2) continue
+            if (pos.x < -drawArea.width / 2 || pos.x > drawArea.width / 2 || pos.y < -drawArea.height / 2 || pos.y > drawArea.height / 2) continue
 
             const relX = pos.x / gridWidth
             const relY = pos.y / gridHeight
@@ -185,8 +188,8 @@ async function makeImage() {
                 onMap = true
             }
             applyRibbon()
-            if (!hitMap) continue
-            if (!onMap && depth > lightHeight) continue
+
+            if (shouldFilterHits()) continue
 
             applyLights()
 
@@ -210,6 +213,7 @@ async function makeImage() {
     // print(allTimes / times.length)
 }
 
+function shouldFilterHits() { }
 function applyRibbon() { }
 function applyLights() { }
 function prepareRender() { }
@@ -218,16 +222,10 @@ function prepareRender() { }
 
 function makeBackground() {
     background(220)
-    // background(pencilDarkColor[0], pencilDarkColor[1], pencilDarkColor[2])
-
-    // fill(pencilDarkColor[0], pencilDarkColor[1], pencilDarkColor[2])
     fill(backgroundColor)
     noStroke()
     rect(20, 20, width - 40, height - 40, 2)
-
-    // const paperColorHex = `#${num2hex(paperColor[0])}${num2hex(paperColor[1])}${num2hex(paperColor[2])}`
     const paperColorHex = `#${num2hex(pencilDarkColor[0])}${num2hex(pencilDarkColor[1])}${num2hex(pencilDarkColor[2])}`
-
     for (let i = 0; i < 10; i++) {
         const x = random(width)
         const y = random(height)
