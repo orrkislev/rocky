@@ -14,9 +14,9 @@ function vectorToCoord(x, y, z) {
 const azimuthalProjection = {
     name: 'azimuthal',
     toPlane: (lat, log) => {
-        let r = map(lat, -90, 90, 0, 1)
+        let r = (lat + 90) / 180
         r = easeOutQuad(r) / 2
-        const a = map(log, -180, 180, 0, 360)
+        const a = log + 180
         const x = r * cos(a)
         const y = r * sin(a)
         return new Point(x, y)
@@ -27,7 +27,8 @@ const azimuthalProjection = {
         r = easeOutQuad_reverse(r) / 2
         const a = atan2(y, x)
         if (r > .5 || !r) return null
-        const lat = map(r, 0, .5, -90, 90)
+
+        const lat = r * 180 - 90;
         const long = a
         return new Point(lat, long)
     }
@@ -36,13 +37,13 @@ const azimuthalProjection = {
 const cylindricProjection = {
     name: 'cylindric',
     toPlane: (lat, log) => {
-        const x = map(log, -180, 180, -.5, .5)
-        const y = map(lat, -90, 90, -.5, .5)
+        const x = log / 360
+        const y = lat / 180
         return new Point(x, y)
     },
     toSphere: (x, y) => {
-        const lat = map(y, -.5, .5, -90, 90)
-        const long = map(x, -.5, .5, -180, 180)
+        const lat = y * 180
+        const long = x * 360
         if (abs(lat) > 90 || abs(long) > 180) return null
         return new Point(lat, long)
     }
@@ -51,10 +52,10 @@ const cylindricProjection = {
 const conicProjection = {
     name: 'conic',
     toPlane: (lat, log) => {
-        let r = map(lat, -90, 90, 0, 1)
+        let r = (lat + 90) / 180
         r = easeOutQuad(r)
-        r = map(r, 0, 1, .05, .5)
-        const a = map(log, -180, 180, -20, 200)
+        r = r * 0.45 + 0.05
+        const a = (x + 180) / 360 * 220 - 20
         const x = r * cos(a)
         const y = r * sin(a) * 1.5 - .25
         return new Point(x, y)
@@ -63,16 +64,16 @@ const conicProjection = {
         x *= -1
         y = (y + .25) / 1.5
         let r = sqrt(x * x + y * y)
-        r = map(r, .05, .5, 0, 1)
+        r = (r - 0.05) / 0.45
         r = easeOutQuad_reverse(r)
-        const lat = map(r, 0, 1, -90, 90)
+        const lat = r * 180 - 90
 
         if (r < .0 || !r) return null
 
         const a = ((atan2(y, x) + 360) % 360)
         let long = null
-        if (a < 200) long = map(a, -20, 200, -180, 180)
-        if (a > 340) long = map(a - 360, -20, 200, -180, 180)
+        if (a < 200) long = ((a + 20) / 220) * 360 - 180
+        if (a > 340) long = ((a - 340) / 220) * 360 - 180
         if (!long) return null
         return new Point(lat, long)
     }
@@ -102,13 +103,13 @@ const vanDerGrintenProjection = {
 
         let x = sign(lambda) * halfPi * x1
         let y = sign(phi) * halfPi * sqrt(1 + D * abs(x1) - x1 * x1)
-        x = map(x, -pi, pi, -.5, .5)
-        y = map(y, -halfPi, halfPi, -.4, .4)
+        x = x / pi * .5
+        y = y / halfPi * .4
         return new Point(x, y)
     },
     toSphere: (origx, origy) => {
-        x = map(origx, -.5, .5, -pi, pi)
-        y = map(origy, -.4, .4, -halfPi, halfPi)
+        x = origx * pi * 2
+        y = origy * halfPi * 2.5
         var delta;
         var sy = sign(y);
         y = abs(y) / pi;
@@ -137,8 +138,8 @@ const vanDerGrintenProjection = {
 
         let lon = sign(x) * (sqrt(D * D + 4) + D) * pi / 4
         let lat = sy * halfPi * B
-        lat = map(lat, -halfPi, halfPi, -90, 90)
-        lon = map(lon, -pi, pi, -180, 180)
+        lat = (lat / halfPi) * 90  //map(lat, -halfPi, halfPi, -90, 90)
+        lon = (lon / pi) * 180 //map(lon, -pi, pi, -180, 180)
         if (!lat || !lon) return null
         if (abs(lat) > 90 || abs(lon) > 180) return null
         return new Point(lat, lon);
@@ -154,14 +155,14 @@ const naturalEarthProjection = {
         var phi2 = phi * phi, phi4 = phi2 * phi2, phi6 = phi2 * phi4;
         let x = lambda * (0.84719 - 0.13063 * phi2 + phi6 * phi6 * (-0.04515 + 0.05494 * phi2 - 0.02326 * phi4 + 0.00331 * phi6))
         let y = phi * (1.01183 + phi4 * phi4 * (-0.02625 + 0.01926 * phi2 - 0.00396 * phi4))
-        x = map(x, -pi, pi, -.5, .5)
-        y = map(y, -halfPi, halfPi, -.5, .5)
+        x = x * pi * 2 //map(x, -pi, pi, -.5, .5)
+        y = y * halfPi * 2//map(y, -halfPi, halfPi, -.5, .5)
         return new Point(x, y)
     },
     toSphere: (origx, origy) => {
         if (abs(origy) > .45) return null
-        x = map(origx, -.5, .5, -pi, pi)
-        y = map(origy, -.5, .5, -halfPi, halfPi)
+        x = origx * pi * 2 //map(origx, -.5, .5, -pi, pi)
+        y = origy * halfPi * 2 //map(origy, -.5, .5, -halfPi, halfPi)
         var phi = y, i = 25, delta, phi2, phi4, phi6;
         do {
             phi2 = phi * phi; phi4 = phi2 * phi2;
@@ -172,8 +173,8 @@ const naturalEarthProjection = {
 
         let lon = x / (0.84719 - 0.13063 * phi2 + phi6 * phi6 * (-0.04515 + 0.05494 * phi2 - 0.02326 * phi4 + 0.00331 * phi6)),
             lat = phi
-        lat = map(lat, -halfPi, halfPi, -90, 90)
-        lon = map(lon, -pi, pi, -180, 180)
+        lat = (lat / halfPi) * 90//map(lat, -halfPi, halfPi, -90, 90)
+        lon = (lon / pi) * 180//map(lon, -pi, pi, -180, 180)
         if (abs(lat) > 90 || abs(lon) > 180) return null
         return new Point(lat, lon);
     }
@@ -181,12 +182,12 @@ const naturalEarthProjection = {
 
 const doubleAzimuthalProjection = {
     name: 'doubleAzimuthal',
-    ratio:2,
+    ratio: 2,
     toPlane: (lat, lon) => {
         if (lon == 0) return null
-        let y = map(lat, -90, 90, -1, 1)
+        let y = lat / 90 // map(lat, -90, 90, -1, 1)
         let w = sqrt(1 - abs(y) ** 2) / 2
-        let x = sign(lon) / 2 + map(abs(lon), 0, 180, -w, w)
+        let x = sign(lon) / 2 + w * ((abs(lon) - 90) / 90) //map(abs(lon), 0, 180, -w, w)
         return new Point(x / 2, y / 2)
     },
     toSphere: (x, y) => {
@@ -215,14 +216,14 @@ const azimuthalEqualAreaProjection = {
             cc = cos(c);
         let x = atan2(phi * sc, z * cc),
             y = asin(z && lambda * sc / z)
-        x = map(x, -pi, pi, -.5, .5)
-        y = map(y, -halfPi, halfPi, -.4, .4)
+        x = x / pi * .5 //map(x, -pi, pi, -.5, .5)
+        y = y / halfPi * .4 //map(y, -halfPi, halfPi, -.4, .4)
         return new Point(x, y)
     },
 
     toSphere: (origx, origy) => {
-        const x = map(origx, -.5, .5, -pi, pi)
-        const y = map(origy, -.4, .4, -halfPi, halfPi)
+        const x = origx * pi * 2//map(origx, -.5, .5, -pi, pi)
+        const y = origy * halfPi * 2.5//map(origy, -.4, .4, -halfPi, halfPi)
         const z = sqrt(x * x + y * y),
             c = 2 * asin(z / 2),
             sc = sin(c),

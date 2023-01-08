@@ -38,6 +38,11 @@ function swirl2(img, pos, ammount, r) {
 }
 
 function smear(img, path, strength, r) {
+    if (!path){
+        path = new Path()
+        for (let i = 0; i < 4; i++) path.add(p(random(img.width), random(img.height)))
+        path.smooth()
+    }
     const c = createGraphics(img.width, img.height)
     c.image(img, 0, 0)
     c.loadPixels()

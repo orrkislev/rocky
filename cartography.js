@@ -1,5 +1,6 @@
 backgroundColors = [[245, 245, 220], [239, 208, 184], [219, 206, 160], [234, 234, 234], [50, 50, 50]]
 goldColors = [[194, 175, 80], [114, 84, 15], [210, 186, 92], [255, 230, 140]]
+greenColors = [[85, 166, 48], [0, 127, 95], [128, 185, 24], [43, 147, 72]]
 ribbonColors = [[255, 71, 55], [210, 186, 92]]
 
 const toColor = (colorArray) => color(colorArray[0], colorArray[1], colorArray[2])
@@ -15,12 +16,13 @@ function setup() {
     paperColor = ([255, 215, 200]).sort(() => random() - .5)
     paperColor = [255, 255, 255]
     pencilDarkColor = [0, 0, random() < 0.5 ? 0 : 50]
-    pencilBrightColor = random() < 0.7 || (backgroundColor[0] < 100) ? [255, 255, 255] : backgroundColor
+    pencilBrightColor = random() < 0.7 || backgroundColor[0] < 100 ? [255, 255, 255] : backgroundColor
 
     makeImage()
 
     renderType = choose([1, 2])
-    withLights = random() < 0.8
+    if (renderType == 1) moreColors = choose([goldColors, greenColors])
+    withLights = backgroundColor[0] < 100 ? true : random() < 0.8
     withDeeperShadow = random() < 0.5
     withWallShadow = random() < 0.5
 }
@@ -33,7 +35,7 @@ async function makeImage() {
         azimuthalEqualAreaProjection
     ])
     // projection = doubleAzimuthalProjection
-    console.log(projection.name)
+    console.log('projection - ' + projection.name)
 
     fillDir = random(30, 80) * (random() < .5 ? 1 : -1)
 
@@ -47,11 +49,11 @@ async function makeImage() {
     }
 
     // heightMap = createHeightMap_shader()
-    console.time('make height map')
+    console.time('phase - make height map')
     heightMap = createHeightMap()
     background(0)
     image(heightMap, 20, 20, width - 40, heightMap.height * (width - 40) / heightMap.width)
-    console.timeEnd('make height map')
+    console.timeEnd('phase - make height map')
     // return
 
 
@@ -71,15 +73,13 @@ async function makeImage() {
 
     // const pixel_density = heightMap.pixelDensity()
 
-    console.time('draw background')
     makeBackground()
     await timeout()
-    console.timeEnd('draw background')
 
-    console.time('draw relief')
+    console.time('phase - draw relief')
     translate(-width / 2, height / 2)
 
-    if (random() < 0.5) {
+    if (random() < 0.4) {
         ribbon = {
             path: new Path([p(gridWidth * random(-.5, .5), -gridHeight / 2), p(random(-100, 100), 0), p(gridWidth * random(-.5, .5), gridHeight / 2)]),
             width: random(20, 100),
@@ -121,7 +121,7 @@ async function makeImage() {
         prepareRender = () => {
             let finalColor = brightColor
             if (col < 85) finalColor = pencilDarkColor
-            else if (col < 170) finalColor = choose(goldColors)
+            else if (col < 170) finalColor = choose(moreColors)
             stroke(finalColor[0], finalColor[1], finalColor[2])
         }
         slopeMultiplier = 255
@@ -206,7 +206,7 @@ async function makeImage() {
         await timeout()
     }
 
-    console.timeEnd('draw relief')
+    console.timeEnd('phase - draw relief')
 
     // let allTimes = 0
     // times.forEach(t => allTimes += t)

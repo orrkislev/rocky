@@ -2,13 +2,12 @@
 class PathCreator {
     constructor(w, h, pathType) {
         if (!pathType) pathType = choose(Object.values(PathCreator.pathTypes))
-        print('lines', pathType.name)
+        print('heightMap - lines type', pathType.name)
         this.w = w; this.h = h; this.pathType = pathType
 
         this.pathType.init(this)
 
         this.segmentLength = this.w * random(0.001, .01)
-        print('segmentLength', this.segmentLength)
         this.pathLengths = choose([null, random(50, 300)])
     }
 
@@ -61,7 +60,7 @@ class PointGenerator {
         this.w = w; this.h = h
 
         this.generatorType.init(this)
-        print('points', this.generatorType.name)
+        print('heightMap - points type', this.generatorType.name)
         if (data) this.data = data
     }
     getPoint() {
