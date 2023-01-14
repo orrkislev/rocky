@@ -19,7 +19,7 @@ const azimuthalProjection = {
         const a = log + 180
         const x = r * cos(a)
         const y = r * sin(a)
-        return new Point(x, y)
+        return V(x, y)
     },
     toSphere: (x, y) => {
         x *= -1
@@ -30,7 +30,7 @@ const azimuthalProjection = {
 
         const lat = r * 180 - 90;
         const long = a
-        return new Point(lat, long)
+        return V(lat, long)
     }
 }
 
@@ -39,13 +39,13 @@ const cylindricProjection = {
     toPlane: (lat, log) => {
         const x = log / 360
         const y = lat / 180
-        return new Point(x, y)
+        return V(x, y)
     },
     toSphere: (x, y) => {
         const lat = y * 180
         const long = x * 360
         if (abs(lat) > 90 || abs(long) > 180) return null
-        return new Point(lat, long)
+        return V(lat, long)
     }
 }
 
@@ -58,7 +58,7 @@ const conicProjection = {
         const a = (x + 180) / 360 * 220 - 20
         const x = r * cos(a)
         const y = r * sin(a) * 1.5 - .25
-        return new Point(x, y)
+        return V(x, y)
     },
     toSphere: (x, y) => {
         x *= -1
@@ -75,7 +75,7 @@ const conicProjection = {
         if (a < 200) long = ((a + 20) / 220) * 360 - 180
         if (a > 340) long = ((a - 340) / 220) * 360 - 180
         if (!long) return null
-        return new Point(lat, long)
+        return V(lat, long)
     }
 }
 
@@ -84,9 +84,9 @@ const vanDerGrintenProjection = {
     toPlane: (lat, lon) => {
         const phi = radians(lat),
             lambda = radians(lon)
-        if (!phi) return new Point(lambda, 0);
+        if (!phi) return V(lambda, 0);
         var phi0 = abs(phi);
-        if (!lambda || phi0 === halfPi) return new Point(0, phi);
+        if (!lambda || phi0 === halfPi) return V(0, phi);
         var B = phi0 / halfPi,
             B2 = B * B,
             C = (8 * B - B2 * (B2 + 2) - 5) / (2 * B2 * (B - 1)),
@@ -105,7 +105,7 @@ const vanDerGrintenProjection = {
         let y = sign(phi) * halfPi * sqrt(1 + D * abs(x1) - x1 * x1)
         x = x / pi * .5
         y = y / halfPi * .4
-        return new Point(x, y)
+        return V(x, y)
     },
     toSphere: (origx, origy) => {
         x = origx * pi * 2
@@ -142,7 +142,7 @@ const vanDerGrintenProjection = {
         lon = (lon / pi) * 180 //map(lon, -pi, pi, -180, 180)
         if (!lat || !lon) return null
         if (abs(lat) > 90 || abs(lon) > 180) return null
-        return new Point(lat, lon);
+        return V(lat, lon);
     }
 }
 
@@ -155,14 +155,14 @@ const naturalEarthProjection = {
         var phi2 = phi * phi, phi4 = phi2 * phi2, phi6 = phi2 * phi4;
         let x = lambda * (0.84719 - 0.13063 * phi2 + phi6 * phi6 * (-0.04515 + 0.05494 * phi2 - 0.02326 * phi4 + 0.00331 * phi6))
         let y = phi * (1.01183 + phi4 * phi4 * (-0.02625 + 0.01926 * phi2 - 0.00396 * phi4))
-        x = x * pi * 2 //map(x, -pi, pi, -.5, .5)
-        y = y * halfPi * 2//map(y, -halfPi, halfPi, -.5, .5)
-        return new Point(x, y)
+        x = x * pi * 2
+        y = y * halfPi * 2
+        return V(x, y)
     },
     toSphere: (origx, origy) => {
         if (abs(origy) > .45) return null
-        x = origx * pi * 2 //map(origx, -.5, .5, -pi, pi)
-        y = origy * halfPi * 2 //map(origy, -.5, .5, -halfPi, halfPi)
+        x = origx * pi * 2
+        y = origy * halfPi * 2
         var phi = y, i = 25, delta, phi2, phi4, phi6;
         do {
             phi2 = phi * phi; phi4 = phi2 * phi2;
@@ -173,10 +173,10 @@ const naturalEarthProjection = {
 
         let lon = x / (0.84719 - 0.13063 * phi2 + phi6 * phi6 * (-0.04515 + 0.05494 * phi2 - 0.02326 * phi4 + 0.00331 * phi6)),
             lat = phi
-        lat = (lat / halfPi) * 90//map(lat, -halfPi, halfPi, -90, 90)
-        lon = (lon / pi) * 180//map(lon, -pi, pi, -180, 180)
+        lat = (lat / halfPi) * 90
+        lon = (lon / pi) * 180
         if (abs(lat) > 90 || abs(lon) > 180) return null
-        return new Point(lat, lon);
+        return V(lat, lon);
     }
 }
 
@@ -185,15 +185,14 @@ const doubleAzimuthalProjection = {
     ratio: 2,
     toPlane: (lat, lon) => {
         if (lon == 0) return null
-        let y = lat / 90 // map(lat, -90, 90, -1, 1)
+        let y = lat / 90 
         let w = sqrt(1 - abs(y) ** 2) / 2
-        let x = sign(lon) / 2 + w * ((abs(lon) - 90) / 90) //map(abs(lon), 0, 180, -w, w)
-        return new Point(x / 2, y / 2)
+        let x = sign(lon) / 2 + w * ((abs(lon) - 90) / 90)
+        return V(x / 2, y / 2)
     },
     toSphere: (x, y) => {
         x *= 2
         y *= 2
-        // let lat = map(y, -1, 1, -90, 90)
         const lat = y * 90
         const w = sqrt(1 - abs(y) ** 2) / 2
         let lon = 200
@@ -201,7 +200,7 @@ const doubleAzimuthalProjection = {
         if (lon > 180 || lon < 0) return null
         if (abs(lat) > 90 || abs(lon) > 180) return null
         lon *= sign(x)
-        return new Point(lat, lon);
+        return V(lat, lon);
     }
 }
 
@@ -218,12 +217,12 @@ const azimuthalEqualAreaProjection = {
             y = asin(z && lambda * sc / z)
         x = x / pi * .5 //map(x, -pi, pi, -.5, .5)
         y = y / halfPi * .4 //map(y, -halfPi, halfPi, -.4, .4)
-        return new Point(x, y)
+        return V(x, y)
     },
 
     toSphere: (origx, origy) => {
-        const x = origx * pi * 2//map(origx, -.5, .5, -pi, pi)
-        const y = origy * halfPi * 2.5//map(origy, -.4, .4, -halfPi, halfPi)
+        const x = origx * pi * 2
+        const y = origy * halfPi * 2.5
         const z = sqrt(x * x + y * y),
             c = 2 * asin(z / 2),
             sc = sin(c),
@@ -232,6 +231,202 @@ const azimuthalEqualAreaProjection = {
             lat = asin(z && y * sc / z)
         if (abs(lat) > 90 || abs(lon) > 180) return null
         if (!lat && !lon) return null
-        return new Point(lat, lon);
+        return V(lat, lon);
     },
 }
+
+
+
+
+
+
+
+
+
+
+
+
+function ellipticJi(u, v, m) {
+    var a, b, c;
+    if (!u) {
+      b = ellipticJ(v, 1 - m);
+      return [
+        [0, b[0] / b[1]],
+        [1 / b[1], 0],
+        [b[2] / b[1], 0]
+      ];
+    }
+    a = ellipticJ(u, m);
+    if (!v) return [[a[0], 0], [a[1], 0], [a[2], 0]];
+    b = ellipticJ(v, 1 - m);
+    c = b[1] * b[1] + m * a[0] * a[0] * b[0] * b[0];
+    return [
+      [a[0] * b[2] / c, a[1] * a[2] * b[0] * b[1] / c],
+      [a[1] * b[1] / c, -a[0] * a[2] * b[0] * b[2] / c],
+      [a[2] * b[1] * b[2] / c, -m * a[0] * a[1] * b[0] / c]
+    ];
+  }
+  
+  function ellipticJ(u, m) {
+    var ai, b, phi, t, twon;
+    if (m < epsilon) {
+      t = sin(u);
+      b = cos(u);
+      ai = m * (u - t * b) / 4;
+      return [
+        t - ai * b,
+        b + ai * t,
+        1 - m * t * t / 2,
+        u - ai
+      ];
+    }
+    if (m >= 1 - epsilon) {
+      ai = (1 - m) / 4;
+      b = cosh(u);
+      t = tanh(u);
+      phi = 1 / b;
+      twon = b * sinh(u);
+      return [
+        t + ai * (twon - u) / (b * b),
+        phi - ai * t * phi * (twon - u),
+        phi + ai * t * phi * (twon + u),
+        2 * atan(exp(u)) - halfPi + ai * (twon - u) / b
+      ];
+    }
+  
+    var a = [1, 0, 0, 0, 0, 0, 0, 0, 0],
+        c = [sqrt(m), 0, 0, 0, 0, 0, 0, 0, 0],
+        i = 0;
+    b = sqrt(1 - m);
+    twon = 1;
+  
+    while (abs(c[i] / a[i]) > epsilon && i < 8) {
+      ai = a[i++];
+      c[i] = (ai - b) / 2;
+      a[i] = (ai + b) / 2;
+      b = sqrt(ai * b);
+      twon *= 2;
+    }
+  
+    phi = twon * a[i] * u;
+    do {
+      t = c[i] * sin(b = phi) / a[i];
+      phi = (asin(t) + phi) / 2;
+    } while (--i);
+  
+    return [sin(phi), t = cos(phi), t / cos(phi - b), phi];
+  }
+  
+  function ellipticFi(phi, psi, m) {
+    var r = abs(phi),
+        i = abs(psi),
+        sinhPsi = sinh(i);
+    if (r) {
+      var cscPhi = 1 / sin(r),
+          cotPhi2 = 1 / (tan(r) * tan(r)),
+          b = -(cotPhi2 + m * (sinhPsi * sinhPsi * cscPhi * cscPhi) - 1 + m),
+          c = (m - 1) * cotPhi2,
+          cotLambda2 = (-b + sqrt(b * b - 4 * c)) / 2;
+      return [
+        ellipticF(atan(1 / sqrt(cotLambda2)), m) * sign(phi),
+        ellipticF(atan(sqrt((cotLambda2 / cotPhi2 - 1) / m)), 1 - m) * sign(psi)
+      ];
+    }
+    return [
+      0,
+      ellipticF(atan(sinhPsi), 1 - m) * sign(psi)
+    ];
+  }
+  
+  function ellipticF(phi, m) {
+    if (!m) return phi;
+    if (m === 1) return log(tan(phi / 2 + quarterPi));
+    var a = 1,
+        b = sqrt(1 - m),
+        c = sqrt(m);
+    for (var i = 0; abs(c) > epsilon; i++) {
+      if (phi % pi) {
+        var dPhi = atan(b * tan(phi) / a);
+        if (dPhi < 0) dPhi += pi;
+        phi += dPhi + ~~(phi / pi) * pi;
+      } else phi += phi;
+      c = (a + b) / 2;
+      b = sqrt(a * b);
+      c = ((a = c) - b) / 2;
+    }
+    return phi / (pow(2, i) * a);
+  }
+
+
+
+
+
+
+
+
+
+
+  var abs = Math.abs;
+  var atan = Math.atan;
+  var atan2 = Math.atan2;
+  var ceil = Math.ceil;
+  var cos = Math.cos;
+  var exp = Math.exp;
+  var floor = Math.floor;
+  var log = Math.log;
+  var max = Math.max;
+  var min = Math.min;
+  var pow = Math.pow;
+  var round = Math.round;
+  var sign = Math.sign || function(x) { return x > 0 ? 1 : x < 0 ? -1 : 0; };
+  var sin = Math.sin;
+  var tan = Math.tan;
+ 
+  var epsilon = 1e-6;
+  var epsilon2 = 1e-12;
+  var pi = Math.PI;
+  var halfPi = pi / 2;
+  var quarterPi = pi / 4;
+  var sqrt1_2 = Math.SQRT1_2;
+  var sqrt2 = sqrt(2);
+  var sqrtPi = sqrt(pi);
+  var tau = pi * 2;
+  var degrees = 180 / pi;
+  var radians = pi / 180;
+ 
+  function sinci(x) {
+   return x ? x / Math.sin(x) : 1;
+ }
+ 
+  function asin(x) {
+   return x > 1 ? halfPi : x < -1 ? -halfPi : Math.asin(x);
+ }
+ 
+  function acos(x) {
+   return x > 1 ? 0 : x < -1 ? pi : Math.acos(x);
+ }
+ 
+  function sqrt(x) {
+   return x > 0 ? Math.sqrt(x) : 0;
+ }
+ 
+  function tanh(x) {
+   x = exp(2 * x);
+   return (x - 1) / (x + 1);
+ }
+ 
+  function sinh(x) {
+   return (exp(x) - exp(-x)) / 2;
+ }
+ 
+  function cosh(x) {
+   return (exp(x) + exp(-x)) / 2;
+ }
+ 
+  function arsinh(x) {
+   return log(x + sqrt(x * x + 1));
+ }
+ 
+  function arcosh(x) {
+   return log(x + sqrt(x * x - 1));
+ }

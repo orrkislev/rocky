@@ -18,23 +18,23 @@ function setup() {
     pencilDarkColor = [0, 0, random() < 0.5 ? 0 : 50]
     pencilBrightColor = random() < 0.7 || backgroundColor[0] < 100 ? [255, 255, 255] : backgroundColor
 
-    makeImage()
-
+    
     renderType = choose([1, 2])
     if (renderType == 1) moreColors = choose([goldColors, greenColors])
-    withLights = backgroundColor[0] < 100 ? true : random() < 0.8
     withDeeperShadow = random() < 0.5
     withWallShadow = random() < 0.5
+
+    makeImage()
 }
 
 async function makeImage() {
 
-    projection = choose([cylindricProjection, //azimuthalProjection, 
+    projection = choose([cylindricProjection, azimuthalProjection, 
         conicProjection, vanDerGrintenProjection,
         naturalEarthProjection, doubleAzimuthalProjection,
         azimuthalEqualAreaProjection
     ])
-    // projection = doubleAzimuthalProjection
+    // projection = azimuthalProjection
     console.log('projection - ' + projection.name)
 
     fillDir = random(30, 80) * (random() < .5 ? 1 : -1)
@@ -56,6 +56,8 @@ async function makeImage() {
     console.timeEnd('phase - make height map')
     // return
 
+    const drawArea = { width: withWallShadow ? width : gridWidth, height: withWallShadow ? height : gridHeight }
+
 
     // normalMap = createNormalMap(heightMap)
     // image(normalMap, 20, 20+heightMap.height * (width - 40) / heightMap.width, width - 40, heightMap.height * (width - 40) / heightMap.width)
@@ -71,57 +73,59 @@ async function makeImage() {
 
 
 
-    // const pixel_density = heightMap.pixelDensity()
-
     makeBackground()
     await timeout()
 
     console.time('phase - draw relief')
     translate(-width / 2, height / 2)
 
-    if (random() < 0.4) {
+    if (random() < 0.3) {
+        ribbonStart = V(drawArea.width * random(-.4, .4), -drawArea.height * .4)
+        ribbonCenter = V(random(-100, 100), 0), 
+        ribbonEnd = V(drawArea.width * random(-.4, .4), drawArea.height * .4)
+        ribbonStartDir = vsub(ribbonCenter, ribbonStart).rotate(random(-45, 45)).normalize(100*PS)
+        ribbonEndDir = vsub(ribbonCenter, ribbonEnd).rotate(random(-45, 45)).normalize(100*PS)
+        ribbonPath = [  ribbonStart, ribbonStart.add(ribbonStartDir), ribbonCenter, ribbonEnd.add(ribbonEndDir), ribbonEnd ]
+        ribbonPath = toCrv(ribbonPath)
+
         ribbon = {
-            path: new Path([p(gridWidth * random(-.5, .5), -gridHeight / 2), p(random(-100, 100), 0), p(gridWidth * random(-.5, .5), gridHeight / 2)]),
-            width: random(20, 100),
+            path: ribbonPath,
+            width: PS * random(60, 150),
             color: choose(ribbonColors)
         }
-        ribbon.path.smooth()
-        ribbon.path.lastSegment.handleIn = ribbon.path.lastSegment.handleIn.rotate(random(-45, 45))
-        ribbon.path.firstSegment.handleOut = ribbon.path.firstSegment.handleOut.rotate(random(-45, 45))
+
         ribbon.mask = createGraphics(width, height)
         ribbon.mask.strokeWeight(ribbon.width / 2)
         for (let i = 0; i < ribbon.path.length; i++) {
-            const pos = ribbon.path.getPointAt(i)
+            // const pos = ribbon.path.getPointAt(i)
+            const pos = ribbon.path[i]
             ribbon.mask.point(width / 2 + pos.x, height / 2 + pos.y)
         }
         applyRibbon = () => {
             const inRibbonMask = ribbon.mask.get(pos.x + width / 2, pos.y + height / 2)[3] > 0
             if (inRibbonMask) {
                 brightColor = ribbon.color
-                depth = lerp(lastDepth, depth + 60, .5)
+                // depth = lerp(lastDepth, depth + 60, .5)
+                depth += lerp(abs(pos.y) / gridHeight, 1, .5) * 60
                 hitMap = true
                 onMap = true
             }
         }
     }
 
-    if (withLights) {
-        applyLights = () => {
-            if (depth > lightHeight) col += 200
-            // else if (withDeeperShadow) col -= lightHeight - depth
-
-            lightHeight = max(lightHeight, depth)
-            const distToLight = V(pos.x / gridHeight + .5, pos.y / gridWidth + .5).sub(lightPos).mag()
-            const lightStep = map(distToLight, 0, 2, 2, 1) * PS
-            lightHeight -= lightStep
-        }
+    applyLights = () => {
+        if (depth > lightHeight) col += 200
+        lightHeight = max(lightHeight, depth)
+        const distToLight = V(pos.x / gridHeight + .5, pos.y / gridWidth + .5).sub(lightPos).mag()
+        const lightStep = map(distToLight, 0, 2, 2, 1) * PS
+        lightHeight -= lightStep
     }
 
     if (renderType == 1) {
         prepareRender = () => {
             let finalColor = brightColor
-            if (col < 85) finalColor = pencilDarkColor
-            else if (col < 170) finalColor = choose(moreColors)
+            if (col < slopeMultiplier*.3) finalColor = pencilDarkColor
+            else if (col < slopeMultiplier*.8) finalColor = brightColor == pencilBrightColor ? choose(moreColors) : brightColor
             stroke(finalColor[0], finalColor[1], finalColor[2])
         }
         slopeMultiplier = 255
@@ -134,32 +138,27 @@ async function makeImage() {
         slopeMultiplier = 30
     }
 
-    shouldFilterHits = withWallShadow ? () => !hitMap || (!onMap && depth > lightHeight) : () => !hitMap || !onMap
+    shouldFilterHits = withWallShadow ? 
+        () => !hitMap || (!onMap && depth > lightHeight) : 
+        () => !hitMap || !onMap
 
 
 
-    const drawArea = { width: withWallShadow ? width : gridWidth, height: withWallShadow ? height : gridHeight }
 
 
     const lightPos = V(fillDir > 0 ? 0 : 1, 0)
     const offsetX = drawArea.height * tan(90 - fillDir)
     const startX = fillDir > 0 ? -drawArea.width / 2 - offsetX : -drawArea.width / 2
     const endX = fillDir > 0 ? drawArea.width / 2 : drawArea.width / 2 - offsetX
-    const moveX = Math.sign(fillDir) * cos(fillDir) / 2
-    const moveY = Math.sign(fillDir) * sin(fillDir) / 2
-    // times = []
-    // lastTime = performance.now()
+    const moveX = PS * Math.sign(fillDir) * cos(fillDir) * .75
+    const moveY = PS * Math.sign(fillDir) * sin(fillDir) * .75
     strokeWeight(PS * 2)
-    for (let x = startX; x < endX; x += .5) {
+    for (let x = startX; x < endX; x += 1 * PS) {
         lightHeight = 0
         hitMap = false
         lastDepth = 0
-        pos = new Point(x, -drawArea.height / 2)
+        pos = V(x, -drawArea.height / 2)
         while (pos.y < drawArea.height / 2) {
-            // const newTime = performance.now()
-            // times.push(newTime - lastTime)
-            // lastTime = newTime
-
             pos.y += moveY
             pos.x += moveX
             if (pos.x < -drawArea.width / 2 || pos.x > drawArea.width / 2 || pos.y < -drawArea.height / 2 || pos.y > drawArea.height / 2) continue
@@ -180,9 +179,10 @@ async function makeImage() {
                 const sampleColor = heightMap.get(percX * heightMap.width, percY * heightMap.height)
                 depth += sampleColor[0]
 
-                depth += noise(percX * 30, percY * 30) * 8 - 4
+                // depth += noise(percX * 30, percY * 30) * 8 - 4
                 slope = depth - lastDepth
-                col = easeInOutExpo((slope + 1) / 2) * slopeMultiplier
+                // col = easeInOutExpo((slope + 1) / 2) * slopeMultiplier
+                col = slope * slopeMultiplier
                 lastDepth = depth
                 hitMap = true
                 onMap = true
@@ -195,7 +195,7 @@ async function makeImage() {
 
             col = constrain(col, 0, 255)
 
-            strokeWeight(PS * (depth / 255 + 1))
+            strokeWeight(PS * (depth / 255 + 1) * 2)
 
             prepareRender()
 
@@ -205,12 +205,7 @@ async function makeImage() {
         pos.x++
         await timeout()
     }
-
     console.timeEnd('phase - draw relief')
-
-    // let allTimes = 0
-    // times.forEach(t => allTimes += t)
-    // print(allTimes / times.length)
 }
 
 function shouldFilterHits() { }
@@ -219,18 +214,17 @@ function applyLights() { }
 function prepareRender() { }
 
 
-
 function makeBackground() {
     background(220)
     fill(backgroundColor)
     noStroke()
-    rect(20, 20, width - 40, height - 40, 2)
+    rect(20*PS, 20*PS, width - 40*PS, height - 40*PS, 2*PS)
     const paperColorHex = `#${num2hex(pencilDarkColor[0])}${num2hex(pencilDarkColor[1])}${num2hex(pencilDarkColor[2])}`
     for (let i = 0; i < 10; i++) {
         const x = random(width)
         const y = random(height)
-        const gradient = drawingContext.createRadialGradient(x, y, 0, x, y, random(width))
-        gradient.addColorStop(0, paperColorHex + '11')
+        const gradient = drawingContext.createRadialGradient(x, y, 0, x, y, width * random(.25,.75))
+        gradient.addColorStop(0, paperColorHex + '31')
         gradient.addColorStop(1, paperColorHex + '00')
         drawingContext.fillStyle = gradient
         rect(0, 0, width, height)
@@ -255,6 +249,11 @@ function num2hex(n) {
 }
 
 function distortPos(pos) {
-    const newDist = pos.length * (1 + noise(pos.length / 100, pos.angle / 100) * .15 - .075)
-    return pointFromAngle(pos.angle, newDist)
+    // const newDist = pos.length * (1 + noise(pos.length / 100, pos.angle / 100) * .15 - .075)
+    // return pointFromAngle(pos.angle, newDist)
+
+    const mag = pos.mag()
+    const angle = pos.heading()
+    const newDist = mag * (1 + noise(mag / 100, angle / 100) * .15 - .075)
+    return angleVec(angle, newDist)
 }

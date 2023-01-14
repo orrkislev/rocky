@@ -1,7 +1,7 @@
 function createHeightMap() {
     let c_map = createGraphics(round(height), round(height / 2))
     c_map.background(random(50, 120))
-    const mapSize = p(c_map.width, c_map.height)
+    const mapSize = V(c_map.width, c_map.height)
     const scaler = mapSize.x / 100
 
     const mapType = choose([0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3])
@@ -14,8 +14,9 @@ function createHeightMap() {
         if (mapType == 0) {
             console.time('heightMap - 0 - circles')
             const sumCircles = random(100, 1000)
+            const options = Array(4).fill(0).map((_, i) => choose([0,1,2]))
             for (let i = 0; i < sumCircles; i++) {
-                const ct = choose([0, 1, 2])
+                const ct = choose(options)
                 if (ct == 0) painter.drawCircle(pointGenerator.getPoint(), scaler * random(1, 10))
                 if (ct == 1) painter.hole(pointGenerator.getPoint(), scaler * random(.5, 4))
                 if (ct == 2) painter.crater(pointGenerator.getPoint(), scaler * random(.5, 4))
@@ -28,7 +29,6 @@ function createHeightMap() {
             for (let i = 0; i < numLines; i++) {
                 path = pathCreator.createPath(pointGenerator.getPoint())
                 painter.drawLine(path)
-                path.remove()
             }
             console.timeEnd('heightMap - 1 - lines')
         }
@@ -57,12 +57,12 @@ function createHeightMap() {
 
     } else if (mapType == 3) {
         console.time('heightMap - 3 - voronoi')
-        if (!shaderGraphics) shaderGraphics = createGraphics(c_map.width, c_map.height, WEBGL)
+        initShaderGraphics(c_map,false,true)
         shaderGraphics.noStroke()
         shaderGraphics.shader(voronoiShader)
         voronoiShader.setUniform('resolution', [c_map.width, c_map.height])
         voronoiShader.setUniform('seed', random(1000))
-        voronoiShader.setUniform('scale', random(.4, 1.5))
+        voronoiShader.setUniform('scale', random(.4, 7))
         shaderGraphics.rect(0, 0, c_map.width, c_map.height)
         c_map.image(shaderGraphics, 0, 0, c_map.width, c_map.height)
         console.timeEnd('heightMap - 3 - voronoi')
@@ -88,24 +88,22 @@ function createHeightMap() {
 
     console.time('heightMap - deformations')
     for (let i = 1; i < 4; i++) {
-        if (random() < .5) c_map = swirl(c_map, p(random(mapSize.x), random(mapSize.y)), scaler * random(10 * i) * sign(random(-1, 1)), random(mapSize.x / 4))
-        else if (random() < .5) {
-            let smearPath = null
-            if (random() < 0.1) smearPath = new Circle(p(mapSize.x / 2, mapSize.y / 2), mapSize.y / 3)
-            c_map = smear(c_map, smearPath, random(4, 16) * scaler, random(2, 6) * scaler)
-            i++
-        }
+        const deformType = choose([0, 1, 2, 2])
+        if (deformType == 0)
+            c_map = swirl(c_map, V(random(mapSize.x), random(mapSize.y)), scaler * random(60, 60), random(mapSize.x / 4))
+        if (deformType == 1)
+            c_map = smear(c_map, random(4, 16) * scaler, random(2, 6) * scaler)
     }
     console.timeEnd('heightMap - deformations')
 
 
     console.time('heightMap - elements')
-    // s_map = tracks(s_map, new Path([p(0, 0), p(mapSize.x, mapSize.y)]), 100, 30)
+    // // s_map = tracks(s_map, new Path([p(0, 0), p(mapSize.x, mapSize.y)]), 100, 30)
     const sumAmmonites = random()<0.8 ? 0 : random(2, 5)
-    for (let i = 0; i < sumAmmonites; i++) ammonite(c_map, randomIn(mapSize), random(10, 50))
-    // footPrint(c_map)
+    for (let i = 0; i < sumAmmonites; i++) ammonite(c_map, V(random(mapSize.x),random(mapSize.y)), random(10, 50))
+    // // footPrint(c_map)
     const sumBushes = random()<0.4 ? 0 : random(2, 5)
-    for (let i = 0; i < sumBushes; i++) bush(c_map, randomIn(mapSize), scaler * random(1, 5))
+    for (let i = 0; i < sumBushes; i++) bush(c_map, V(random(mapSize.x),random(mapSize.y)), scaler * random(1, 5))
     console.timeEnd('heightMap - elements')
 
     return c_map
@@ -118,6 +116,8 @@ class Painter {
         this.scaler = img.width / 100
         this.colorThreshold = random() * random()
         this.fillThreshold = random() < 0.5 ? random() * random() : 1 - random() * random()
+        this.fillThreshold = constrain(this.fillThreshold, 0.1, 0.9)
+
     }
 
     getColor = () => random() < this.colorThreshold ? 0 : 255
@@ -125,10 +125,10 @@ class Painter {
     getAlpha = () => random(100, 255)
     getBlur = () => this.scaler * random(3)
 
-    drawPath(path, offset = p(0, 0)) {
+    drawPath(path, offset = V(0, 0)) {
         this.img.beginShape()
         for (let i = 0; i < path.length; i++) {
-            const pos = path.getPointAt(i)
+            const pos = path[i]
             this.img.vertex(pos.x + offset.x, pos.y + offset.y)
         }
         this.img.endShape()
@@ -149,9 +149,12 @@ class Painter {
     }
 
     drawCircle(pos, r) {
-        const shape = new Circle(pos, r)
+        let shape = []
+        for (let a = 0; a < 360; a += 10) {
+            shape.push(V(pos.x + r * cos(a), pos.y + r * sin(a)))
+        }
+        shape = toCrv(shape)
         this.drawLine(shape)
-        shape.remove()
     }
 
     hole(pos, r) {
@@ -162,14 +165,21 @@ class Painter {
     }
 
     crater(pos, r) {
-        const shape = new Circle(pos, r).wonky(.5, 1.6)
+        let shape = []
+        for (let a = 0; a < 360; a += 30) {
+            const shapePos = angleVec(a, r)
+            const n = noise(shapePos.x, shapePos.y) + .5
+            shapePos.mult(n).add(pos)
+            shape.push(shapePos)
+        }
+        shape = toCrv(shape)
 
         this.img.noStroke()
         this.img.drawingContext.filter = `blur(${this.scaler * random(1, 4)}px)`
         this.img.fill(255, random(100, 255))
-        this.drawPath(shape, p(this.scaler * 2, this.scaler * 2))
+        this.drawPath(shape, V(this.scaler * 2, this.scaler * 2))
         this.img.fill(0, random(100, 255))
-        shape.remove()
+        this.drawPath(shape)
     }
 }
 

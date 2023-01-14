@@ -13,16 +13,4 @@ function initP5(webgl = false, ratio) {
     noiseSeed(round_random(1000))
     angleMode(DEGREES)
     V = createVector
-
-    paper.setup();
-
-}
-
-function preload() {
-    initShaders()
-}
-
-function initShaders() {
-    swirlShader = loadShader('shaders/shader.vert', 'shaders/swirl.frag')
-    voronoiShader = loadShader('shaders/shader.vert', 'shaders/voronoi.frag')
 }
