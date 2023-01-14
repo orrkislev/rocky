@@ -61,7 +61,6 @@ class Random {
     }
 
     random(a = 1, b = 0) { return this.random_num(a, b) }
-    random_in(minMax) { return this.random_num(minMax[0], minMax[1]) }
 }
 
 let R = new Random()
@@ -96,48 +95,27 @@ function toCrv(crv) {
         for (let t = 0; t < l; t++) {
             x = curvePoint(crv[i].x, crv[i + 1].x, crv[i + 2].x, crv[i + 3].x, t / l)
             y = curvePoint(crv[i].y, crv[i + 1].y, crv[i + 2].y, crv[i + 3].y, t / l)
-            newCrv.push(createVector(x, y))
+            newCrv.push(v(x, y))
         }
     }
     return newCrv
 }
 
-function crvLength(crv) {
-    l = 0
-    for (let i = 0; i < crv.length - 1; i++) {
-        l += p5.Vector.dist(crv[i], crv[i + 1])
-    }
-    return l
-}
-
-function placeOnCurve(crv, d) {
-    let l = 0
-    for (let i = 0; i < crv.length - 1; i++) {
-        l += sqrt((crv[i].x - crv[i + 1].x) ** 2 + (crv[i].y - crv[i + 1].y) ** 2)
-        if (l >= d) return crv[i]
-    }
-    return false
-}
-
 const v = (x, y) => createVector(x, y),
-    v_rel = (x, y) => createVector(x * baseWidth, y * baseHeight),
-    vlerp = p5.Vector.lerp,
     vdist = p5.Vector.dist
     vadd = p5.Vector.add,
     vmul = p5.Vector.mult,
     vsub = p5.Vector.sub
-const angleVec = (angle, distance) => createVector(cos(angle) * distance, sin(angle) * distance)
+const angleVec = (a, d) => v(cos(a) * d, sin(a) * d)
 
 
 
 
 // --- UTILS
-const random = (a = 1, b = 0) => fxrand() * (b - a) + a
-const randomRange = (range) => random(range[0], range[1])
+const random = (a = 1, b = 0) => R.random(a, b)
 const round_random = (a = 1, b = 0) => Math.floor(random(a, b + 1))
 const choose = (arr) => arr[Math.floor(random(arr.length))]
 
 const easeInOutExpo = (x) => x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? pow(2, 20 * x - 10) / 2 : (2 - pow(2, -20 * x + 10)) / 2
 const easeOutQuad = (x) => 1 - (1 - x) * (1 - x)
 const easeOutQuad_reverse = (x) => 1 - sqrt(1 - x)
-const smoothMap = (x, a, b, c, d) => easeInOutExpo(map(x, a, b, 0, 1)) * (d - c) + c

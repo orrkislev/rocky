@@ -119,7 +119,6 @@ function bush(img, pos, r) {
 class PathCreator {
     constructor(w, h, pathType) {
         if (!pathType) pathType = choose(Object.values(PathCreator.pathTypes))
-        print('heightMap - lines type', pathType.name)
         this.w = w; this.h = h; this.pathType = pathType
 
         this.pathType.init(this)
@@ -173,11 +172,10 @@ class PathCreator {
 
 class PointGenerator {
     constructor(w, h, generatorType, data){
-        this.generatorType = generatorType ||choose(Object.values(PointGenerator.generatorTypes))
+        this.generatorType = generatorType ||choose(Object.values(PointGenerator.gts))
         this.w = w; this.h = h
 
         this.generatorType.init(this)
-        print('heightMap - points type', this.generatorType.name)
         if (data) this.data = data
     }
     getPoint() {
@@ -185,56 +183,56 @@ class PointGenerator {
     }
 
 
-    static generatorTypes = {
+    static gts = {
         random: {
             name: 'random',
             init: () => { },
-            getPoint: (pointGenerator) => V(pointGenerator.w * random(), pointGenerator.h * random())
+            getPoint: (pg) => V(pg.w * random(), pg.h * random())
         },
         grid: {
             name: 'grid',
-            init: (pointGenerator) => {
-                pointGenerator.data = pointGenerator.w * random(.02, .1)
+            init: (pg) => {
+                pg.data = pg.w * random(.02, .1)
             },
-            getPoint: (pointGenerator) => {
-                let y = round_random(0, pointGenerator.h / pointGenerator.data)
-                let x = round_random(0, pointGenerator.w / pointGenerator.data)
-                return V(x * pointGenerator.data, y * pointGenerator.data)
+            getPoint: (pg) => {
+                let y = round_random(0, pg.h / pg.data)
+                let x = round_random(0, pg.w / pg.data)
+                return V(x * pg.data, y * pg.data)
             }
         },
         hexGrid: {
             name: 'hex grid',
-            init: (pointGenerator) => {
-                pointGenerator.data = pointGenerator.w * random(.02, .1)
+            init: (pg) => {
+                pg.data = pg.w * random(.02, .1)
             },
-            getPoint: (pointGenerator) => {
-                let y = round_random(0, pointGenerator.h / pointGenerator.data)
-                let x = round_random(0, pointGenerator.w / pointGenerator.data)
+            getPoint: (pg) => {
+                let y = round_random(0, pg.h / pg.data)
+                let x = round_random(0, pg.w / pg.data)
                 if (y % 2 == 0) x -= .5
-                return V(x * pointGenerator.data, y * pointGenerator.data)
+                return V(x * pg.data, y * pg.data)
             }
         },
         distribution: {
             name: 'distribution',
-            init: (pointGenerator) => {
-                pointGenerator.data = pointGenerator.w * random(.1, .5)
-                pointGenerator.points = []
+            init: (pg) => {
+                pg.data = pg.w * random(.1, .5)
+                pg.points = []
             },
-            getPoint: (pointGenerator) => {
-                if (pointGenerator.points.length == 0) {
-                    pointGenerator.points.push(V(random(pointGenerator.w), random(pointGenerator.h)))
-                    return pointGenerator.points[0]
+            getPoint: (pg) => {
+                if (pg.points.length == 0) {
+                    pg.points.push(V(random(pg.w), random(pg.h)))
+                    return pg.points[0]
                 }
                 let tries = 0
                 while (tries < 100) {
-                    const pos = V(random(pointGenerator.w), random(pointGenerator.h))
-                    for (const pos2 of pointGenerator.points) {
-                        if (vdist(pos,pos2) < pointGenerator.data) {
+                    const pos = V(random(pg.w), random(pg.h))
+                    for (const pos2 of pg.points) {
+                        if (vdist(pos,pos2) < pg.data) {
                             tries++
                             continue
                         }
                     }
-                    pointGenerator.points.push(pos)
+                    pg.points.push(pos)
                     return pos
                 }
             }
