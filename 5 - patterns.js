@@ -1,11 +1,11 @@
 let scaler
-const ms = (x)=>scaler*x
-const rs = (a,b)=>scaler*random(a,b)
+const ms = (x) => scaler * x
+const rs = (a, b) => scaler * random(a, b)
 function createHeightMap() {
     let c_map = createGraphics(round(height), round(height / 2))
     c_map.background(random(50, 120))
     const mapSize = V(c_map.width, c_map.height)
-    scaler = mapSize.x / 100    
+    scaler = mapSize.x / 100
 
     const mapType = choose([0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3])
 
@@ -61,6 +61,17 @@ function createHeightMap() {
         voronoiShader.setUniform('scale', random(.4, 7))
         shaderGraphics.rect(0, 0, c_map.width, c_map.height)
         c_map.image(shaderGraphics, 0, 0, c_map.width, c_map.height)
+    } else if (mapType == 4) {
+        const painter = new Painter(c_map)
+        const numLines = random(200, 1000)
+        const center = V(random(mapSize.x), random(mapSize.y))
+        for (let i = 0; i < numLines; i++) {
+            const a = random(360)
+            const start = angleVec(a, rs(3, 30)).add(center)
+            const end = angleVec(a, mapSize.x * 1.5).add(center)
+            path = toCrv([start, end])
+            painter.drawLine(path)
+        }
     }
 
 
@@ -69,11 +80,11 @@ function createHeightMap() {
         if (deformType == 0)
             c_map = swirl(c_map, V(random(mapSize.x), random(mapSize.y)), ms(60), random(mapSize.x / 4))
         if (deformType == 1)
-            c_map = smear(c_map, rs(4, 16), rs(2,6))
+            c_map = smear(c_map, rs(4, 16), rs(2, 6))
     }
 
     const sumAmmonites = random() < 0.8 ? 0 : random(2, 5)
-    for (let i = 0; i < sumAmmonites; i++) ammonite(c_map, V(random(mapSize.x), random(mapSize.y)), random(10, 50))
+    for (let i = 0; i < sumAmmonites; i++) ammonite(c_map, V(random(mapSize.x), random(mapSize.y)), rs(1, 5))
     const sumBushes = random() < 0.4 ? 0 : random(2, 5)
     for (let i = 0; i < sumBushes; i++) bush(c_map, V(random(mapSize.x), random(mapSize.y)), rs(1, 5))
 
@@ -92,7 +103,7 @@ class Painter {
     getColor = () => random() < this.clrthr ? 0 : 255
     getFill = () => random() > this.fllthr
     getAlpha = () => random(100, 255)
-    getBlur = () => rs(0,3)
+    getBlur = () => rs(0, 3)
 
     drawPath(path, offset = V(0, 0)) {
         this.img.beginShape()
@@ -110,7 +121,7 @@ class Painter {
                 this.img.fill(this.getColor(), this.getAlpha())
         } else {
             this.img.stroke(this.getColor(), this.getAlpha())
-            this.img.strokeWeight(rs(0,1))
+            this.img.strokeWeight(rs(0, 1))
             this.img.noFill()
         }
         this.img.drawingContext.filter = `blur(${this.getBlur()}px)`

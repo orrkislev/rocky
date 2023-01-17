@@ -1,6 +1,6 @@
 let shaderGraphics, shaderResultGraphics, swirlShader, voronoiShader
 
-function initShaderGraphics(img,initSwirlShader = false, initVoronoiShader = false){
+function initShaderGraphics(img, initSwirlShader = false, initVoronoiShader = false) {
     if (!shaderGraphics) shaderGraphics = createGraphics(img.width, img.height, WEBGL)
     if (!shaderResultGraphics) shaderResultGraphics = createGraphics(img.width, img.height)
     if (initSwirlShader && !swirlShader) swirlShader = shaderGraphics.createShader(vert, fragSwirl)
@@ -8,7 +8,7 @@ function initShaderGraphics(img,initSwirlShader = false, initVoronoiShader = fal
 }
 
 function swirl(img, pos, ammount, r) {
-    initShaderGraphics(img,true,false)
+    initShaderGraphics(img, true, false)
     shaderGraphics.noStroke()
     shaderGraphics.shader(swirlShader)
     swirlShader.setUniform('texture', img)
@@ -25,7 +25,7 @@ function smear(img, strength, r) {
     const p1 = V(random(img.width), random(img.height))
     const p2 = V(random(img.width), random(img.height))
     const middle = vadd(p1, p2).div(2)
-    const dir = vsub(p2, p1).rotate(90).normalize(random(-500,500) * PS)
+    const dir = vsub(p2, p1).rotate(90).normalize(random(-500, 500) * PS)
     const center = vadd(middle, dir)
     const angleStart = (vsub(p1, center).heading() + 360) % 360
     const angleEnd = (vsub(p2, center).heading() + 360) % 360
@@ -39,9 +39,9 @@ function smear(img, strength, r) {
         if (heading <= angleB && heading >= angleA) {
             const distToEdge = max(heading - angleA, angleB - heading)
             const relStrength = 1 - distToEdge / (angleB - angleA)
-            return [abs(vsub(pos, center).mag() - radius),relStrength]
+            return [abs(vsub(pos, center).mag() - radius), relStrength]
         }
-        return [1000,0]
+        return [1000, 0]
     }
     smearFunc = (pos, strength) => vsub(pos, center).rotate(strength).add(center)
 
@@ -51,7 +51,7 @@ function smear(img, strength, r) {
     for (let x = 0; x < c.width; x++) {
         for (let y = 0; y < c.height; y++) {
             const mapPos = V(x, y)
-            const [d,relativeStrength] = func(mapPos)
+            const [d, relativeStrength] = func(mapPos)
             if (d > r) continue
 
             const relativeStrength2 = (1 - easeOutQuad(d / r)) * strength
@@ -79,7 +79,7 @@ function ammonite(img, pos, maxr) {
         spiralPath.push(vadd(p, pos))
     }
     spiralPath = toCrv(spiralPath)
-
+    const rl = spiralPath.length / (revolutions * 3)
     for (let i = 0; i < spiralPath.length; i++) {
         const pathPoint = spiralPath[i]
         const normal = vsub(pathPoint, pos).normalize()
@@ -87,8 +87,8 @@ function ammonite(img, pos, maxr) {
         for (let j = 0; j <= d; j += 1) {
             const newPos = vadd(pathPoint, vmul(normal, j))
             const roundVal = sin(180 * j / d)
-            const ridgeVal = 1 - sin(180 * (i % 20) / 20)
-            c.stroke(50 +ridgeVal * roundVal * 200, 100)
+            const ridgeVal = 1 - sin(180 * (i % rl) / rl)
+            c.stroke(50 + ridgeVal * roundVal * 200, 100)
             c.line(newPos.x, newPos.y, newPos.x, newPos.y)
         }
     }
@@ -121,16 +121,16 @@ class PathCreator {
         if (!pathType) pathType = choose(Object.values(PathCreator.pathTypes))
         this.w = w; this.h = h; this.pathType = pathType
 
-        this.pathType.init(this)
-
         this.segmentLength = this.w * random(0.001, .01)
         this.pathLengths = choose([null, random(50, 300)])
+
+        this.pathType.init(this)
     }
 
     createPath(startingPoint) {
-        let pos = startingPoint || V(random(this.w), random(this.h))
-
         this.pathType.initPath(this)
+
+        let pos = this.pathType.getStartingPoint(this) || startingPoint || V(random(this.w), random(this.h))
 
         const path = []
         const l = this.pathLengths || random(50, 300)
@@ -147,32 +147,39 @@ class PathCreator {
         noiseField: {
             name: 'noise field',
             init: pathCreator => pathCreator.noiseScale = pathCreator.w * random(0.02, 0.2),
-            initPath: () => { },
+            initPath: () => { }, getStartingPoint: () => { },
             getDirection: (pathCreator, pos) => {
                 const n = noise(1000 + pos.x / pathCreator.noiseScale, 1000 + pos.y / pathCreator.noiseScale)
                 return angleVec(n * 360, random(pathCreator.segmentLength))
             }
         }, randomWalker: {
             name: 'random walker',
-            init: () => { },
-            initPath: () => { },
+            init: () => { }, initPath: () => { }, getStartingPoint: () => { },
             getDirection: (pathCreator, pos) => angleVec(random(360), pathCreator.segmentLength * random(10))
         }, straightLines: {
             name: 'straight lines',
             init: () => { },
             initPath: pathCreator => pathCreator.direction = random(360),
+            getStartingPoint: () => { },
             getDirection: (pathCreator, pos) => angleVec(pathCreator.direction, random(pathCreator.segmentLength))
+        }, outwards: {
+            name: 'outwards',
+            init: pc => { pc.center = V(random(pc.w), random(pc.h)); pc.pathLengths = pc.w },
+            initPath: pc => {
+                pc.angle = random(360)
+                if (random() < 0.01) pc.center = V(random(pc.w), random(pc.h))
+            },
+            getStartingPoint: pc => pc.center.copy(),
+            getDirection: (pathCreator, pos) => angleVec(pathCreator.angle, random(pathCreator.segmentLength))
         }
     }
 
 }
 
 
-
-
 class PointGenerator {
-    constructor(w, h, generatorType, data){
-        this.generatorType = generatorType ||choose(Object.values(PointGenerator.gts))
+    constructor(w, h, generatorType, data) {
+        this.generatorType = generatorType || choose(Object.values(PointGenerator.gts))
         this.w = w; this.h = h
 
         this.generatorType.init(this)
@@ -227,7 +234,7 @@ class PointGenerator {
                 while (tries < 100) {
                     const pos = V(random(pg.w), random(pg.h))
                     for (const pos2 of pg.points) {
-                        if (vdist(pos,pos2) < pg.data) {
+                        if (vdist(pos, pos2) < pg.data) {
                             tries++
                             continue
                         }

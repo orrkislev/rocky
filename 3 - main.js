@@ -49,8 +49,8 @@ async function makeImage() {
     }
 
     heightMap = createHeightMap()
-    
-    drawArea = withWallShadow ? [width,height] : [gridWidth, gridHeight]
+
+    drawArea = withWallShadow ? [width, height] : [gridWidth, gridHeight]
 
 
 
@@ -72,7 +72,7 @@ async function makeImage() {
 
         ribbon = {
             path: ribbonPath,
-            width: PS * random(60, 150),
+            width: PS * random(80, 200),
             color: choose(ribbonColors)
         }
 
@@ -98,8 +98,9 @@ async function makeImage() {
     applyLights = () => {
         if (depth > lightHeight) col += 200
         lightHeight = max(lightHeight, depth)
-        const distToLight = V(pos.x / gridHeight + .5, pos.y / gridWidth + .5).sub(lightPos).mag()
-        const lightStep = map(distToLight, 0, 2, 2, 1) * PS
+        // const distToLight = V(pos.x / gridHeight + .5, pos.y / gridWidth + .5).sub(lightPos).mag()
+        const distToLight = V(pos.x, pos.y).div(gridHeight, gridWidth).add(.5, .5).sub(lightPos).mag()
+        const lightStep = map(distToLight, 0, 2, 1, .2)
         lightHeight -= lightStep
     }
 
@@ -236,6 +237,6 @@ function distortPos(pos) {
 
     const mag = pos.mag()
     const angle = pos.heading()
-    const newDist = mag * (1 + noise(mag / 100, angle / 100) * .15 - .075)
+    const newDist = mag * (1 + noise(mag / (PS * 100), angle / 100) * .15 - .075)
     return angleVec(angle, newDist)
 }
