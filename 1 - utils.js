@@ -63,18 +63,19 @@ class Random {
     random(a = 1, b = 0) { return this.random_num(a, b) }
 }
 
-let R = new Random()
+const RANDOM = new Random()
 
 
 
 // --- DRAW
 
-allDots = 0
-async function drawDotXY(x, y) {
-    allDots++
-    if (allDots % 1000 == 0) await timeout()
-    line(x, y, x, y)
-}
+// let allDots = 0
+// async function drawDotXY(x, y) {
+//     allDots++
+//     if (allDots % 1000 == 0) await timeout()
+//     point(x,y)
+//     // line(x, y, x, y)
+// }
 
 function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -112,9 +113,9 @@ const angleVec = (a, d) => v(cos(a) * d, sin(a) * d)
 
 
 // --- UTILS
-const random = (a = 1, b = 0) => R.random(a, b)
-const round_random = (a = 1, b = 0) => Math.floor(random(a, b + 1))
-const choose = (arr) => arr[Math.floor(random(arr.length))]
+const R = (a = 1, b = 0) => RANDOM.random(a, b)
+const R2 = (a = 1, b = 0) => Math.floor(R(a, b + 1))
+const R3 = (arr) => arr[Math.floor(R(arr.length))]
 
 const easeInOutExpo = (x) => x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? pow(2, 20 * x - 10) / 2 : (2 - pow(2, -20 * x + 10)) / 2
 const easeOutQuad = (x) => 1 - (1 - x) * (1 - x)

@@ -1,13 +1,14 @@
 let scaler
 const ms = (x) => scaler * x
-const rs = (a, b) => scaler * random(a, b)
+const rs = (a, b) => scaler * R(a, b)
+
 function createHeightMap() {
     let c_map = createGraphics(round(height), round(height / 2))
-    c_map.background(random(50, 120))
+    c_map.background(R(50, 120))
     const mapSize = V(c_map.width, c_map.height)
     scaler = mapSize.x / 100
 
-    const mapType = choose([0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3])
+    const mapType = R3([0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 4, 4])
 
     if (mapType == 0 || mapType == 1) {
         const pathCreator = new PathCreator(mapSize.x, mapSize.y)
@@ -15,17 +16,17 @@ function createHeightMap() {
         const painter = new Painter(c_map)
 
         if (mapType == 0) {
-            const sumCircles = random(100, 1000)
-            const options = Array(4).fill(0).map((_, i) => choose([0, 1, 2]))
+            const sumCircles = R(100, 1000)
+            const options = Array(4).fill(0).map((_, i) => R3([0, 1, 2]))
             for (let i = 0; i < sumCircles; i++) {
-                const ct = choose(options)
+                const ct = R3(options)
                 const pt = pointGenerator.getPoint()
                 if (ct == 0) painter.drawCircle(pt, rs(1, 10))
                 if (ct == 1) painter.hole(pt, rs(.5, 4))
                 if (ct == 2) painter.crater(pt, rs(.5, 4))
             }
         } else if (mapType == 1) {
-            const numLines = random(200, 1000)
+            const numLines = R(200, 1000)
             for (let i = 0; i < numLines; i++) {
                 path = pathCreator.createPath(pointGenerator.getPoint())
                 painter.drawLine(path)
@@ -36,9 +37,9 @@ function createHeightMap() {
 
     } else if (mapType == 2) {
         c_map.loadPixels()
-        const ratioNoiseScale = random(10)
-        const ratioForce = random(5)
-        const noiseScale = random(2, 6)
+        const ratioNoiseScale = R(10)
+        const ratioForce = R(5)
+        const noiseScale = R(2, 6)
         for (let y = 0; y < mapSize.y; y++) {
             const percY = y / mapSize.y
             for (let x = 0; x < mapSize.x; x++) {
@@ -57,16 +58,16 @@ function createHeightMap() {
         shaderGraphics.noStroke()
         shaderGraphics.shader(voronoiShader)
         voronoiShader.setUniform('resolution', [c_map.width, c_map.height])
-        voronoiShader.setUniform('seed', random(1000))
-        voronoiShader.setUniform('scale', random(.4, 7))
+        voronoiShader.setUniform('seed', R(1000))
+        voronoiShader.setUniform('scale', R(.4, 7))
         shaderGraphics.rect(0, 0, c_map.width, c_map.height)
         c_map.image(shaderGraphics, 0, 0, c_map.width, c_map.height)
     } else if (mapType == 4) {
         const painter = new Painter(c_map)
-        const numLines = random(200, 1000)
-        const center = V(random(mapSize.x), random(mapSize.y))
+        const numLines = R(200, 1000)
+        const center = V(R(mapSize.x), R(mapSize.y))
         for (let i = 0; i < numLines; i++) {
-            const a = random(360)
+            const a = R(360)
             const start = angleVec(a, rs(3, 30)).add(center)
             const end = angleVec(a, mapSize.x * 1.5).add(center)
             path = toCrv([start, end])
@@ -76,18 +77,19 @@ function createHeightMap() {
 
 
     for (let i = 1; i < 4; i++) {
-        const deformType = choose([0, 1, 2, 2])
+        const deformType = R3([0, 1, 2, 2])
         if (deformType == 0)
-            c_map = swirl(c_map, V(random(mapSize.x), random(mapSize.y)), ms(60), random(mapSize.x / 4))
+            c_map = swirl(c_map, V(R(mapSize.x), R(mapSize.y)), ms(60), R(mapSize.x / 4))
         if (deformType == 1)
             c_map = smear(c_map, rs(4, 16), rs(2, 6))
     }
 
-    const sumAmmonites = random() < 0.8 ? 0 : random(2, 5)
-    for (let i = 0; i < sumAmmonites; i++) ammonite(c_map, V(random(mapSize.x), random(mapSize.y)), rs(1, 5))
-    const sumBushes = random() < 0.4 ? 0 : random(2, 5)
-    for (let i = 0; i < sumBushes; i++) bush(c_map, V(random(mapSize.x), random(mapSize.y)), rs(1, 5))
+    const sumAmmonites = R() < 0.8 ? 0 : R(2, 5)
+    for (let i = 0; i < sumAmmonites; i++) ammonite(c_map, V(R(mapSize.x), R(mapSize.y)), rs(1, 5))
+    const sumBushes = R() < 0.4 ? 0 : R(2, 5)
+    for (let i = 0; i < sumBushes; i++) bush(c_map, V(R(mapSize.x), R(mapSize.y)), rs(1, 5))
 
+    c_map.loadPixels()
     return c_map
 }
 
@@ -95,14 +97,14 @@ function createHeightMap() {
 class Painter {
     constructor(img) {
         this.img = img
-        this.clrthr = random() * random()
-        this.fllthr = constrain(random() < 0.5 ? random() * random() : 1 - random() * random(), 0.1, 0.9)
+        this.clrthr = R() * R()
+        this.fllthr = constrain(R() < 0.5 ? R() * R() : 1 - R() * R(), 0.1, 0.9)
 
     }
 
-    getColor = () => random() < this.clrthr ? 0 : 255
-    getFill = () => random() > this.fllthr
-    getAlpha = () => random(100, 255)
+    getColor = () => R() < this.clrthr ? 0 : 255
+    getFill = () => R() > this.fllthr
+    getAlpha = () => R(100, 255)
     getBlur = () => rs(0, 3)
 
     drawPath(path, offset = V(0, 0)) {
@@ -139,7 +141,7 @@ class Painter {
 
     hole(pos, r) {
         this.img.fill(0, 100)
-        this.img.drawingContext.filter = `blur(${r * random(.5, 1.5)}px)`
+        this.img.drawingContext.filter = `blur(${r * R(.5, 1.5)}px)`
         this.img.circle(pos.x, pos.y, r)
         this.img.circle(pos.x, pos.y, r / 2)
     }
@@ -156,49 +158,49 @@ class Painter {
 
         this.img.noStroke()
         this.img.drawingContext.filter = `blur(${rs(1, 4)}px)`
-        this.img.fill(255, random(100, 255))
+        this.img.fill(255, R(100, 255))
         this.drawPath(shape, V(ms(2), ms(2)))
-        this.img.fill(0, random(100, 255))
+        this.img.fill(0, R(100, 255))
         this.drawPath(shape)
     }
 }
 
 
 
-function fillShape(img, path, offset, clr, alpha = 255, blur) {
-    if (blur) img.drawingContext.filter = `blur(${blur}px)`
-    if (clr != null) img.fill(clr, alpha)
-    offset = offset || p(0, 0)
+// function fillShape(img, path, offset, clr, alpha = 255, blur) {
+//     if (blur) img.drawingContext.filter = `blur(${blur}px)`
+//     if (clr != null) img.fill(clr, alpha)
+//     offset = offset || p(0, 0)
 
-    img.beginShape()
-    for (let i = 0; i < path.length; i++) {
-        const pos = path.getPointAt(i)
-        img.vertex(pos.x + offset.x, pos.y + offset.y)
-    }
-    img.endShape()
-}
+//     img.beginShape()
+//     for (let i = 0; i < path.length; i++) {
+//         const pos = path.getPointAt(i)
+//         img.vertex(pos.x + offset.x, pos.y + offset.y)
+//     }
+//     img.endShape()
+// }
 
 
-function createNormalMap(heightMap) {
-    const normalMap = createGraphics(heightMap.width, heightMap.height)
-    heightMap.loadPixels()
-    normalMap.loadPixels()
-    for (let x = 0; x < heightMap.width; x++) {
-        for (let y = 0; y < heightMap.height; y++) {
-            const n = calc_normal(heightMap, x, y)
-            normalMap.set(x, y, color(n.x * 127 + 127, n.y * 127 + 127, n.z * 127 + 127))
-        }
-    }
-    normalMap.updatePixels()
-    return normalMap
-}
+// function createNormalMap(heightMap) {
+//     const normalMap = createGraphics(heightMap.width, heightMap.height)
+//     heightMap.loadPixels()
+//     normalMap.loadPixels()
+//     for (let x = 0; x < heightMap.width; x++) {
+//         for (let y = 0; y < heightMap.height; y++) {
+//             const n = calc_normal(heightMap, x, y)
+//             normalMap.set(x, y, color(n.x * 127 + 127, n.y * 127 + 127, n.z * 127 + 127))
+//         }
+//     }
+//     normalMap.updatePixels()
+//     return normalMap
+// }
 
-function calc_normal(hm, x, y) {
-    const h1 = hm.get(x + 1, y)[0]
-    const h2 = hm.get(x, y + 1)[0]
-    const h3 = hm.get(x - 1, y)[0]
-    const h4 = hm.get(x, y - 1)[0]
-    const n = v(h1 - h3, h2 - h4, 0)
-    n.normalize()
-    return n
-}
+// function calc_normal(hm, x, y) {
+//     const h1 = hm.get(x + 1, y)[0]
+//     const h2 = hm.get(x, y + 1)[0]
+//     const h3 = hm.get(x - 1, y)[0]
+//     const h4 = hm.get(x, y - 1)[0]
+//     const n = v(h1 - h3, h2 - h4, 0)
+//     n.normalize()
+//     return n
+// }

@@ -1,10 +1,10 @@
 async function drawMapStuff() {
     stroke(colorWithAlpha(penColor, 100))
     await drawPath(new Path.Rectangle(new Point(-gridWidth / 2, -gridHeight / 2), new Size(gridWidth, gridHeight)))
-    await drawBackgroundGrid(random(2, 20))
+    await drawBackgroundGrid(R(2, 20))
 
     penThickness = 10
-    stroke(colorWithAlpha(backgroundColor, random(50)))
+    stroke(colorWithAlpha(backgroundColor, R(50)))
     for (let lat = -100; lat <= 100; lat += 1)
         await drawMapLine(lat, -190, lat, 190)
     penThickness = .5

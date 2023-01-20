@@ -24,14 +24,15 @@ void main(){vec2 uv = vTexCoord.xy * .5; uv.y *= .5;gl_FragColor = vec4(sqrt(vec
 
 let scaler
 const ms = (x) => scaler * x
-const rs = (a, b) => scaler * random(a, b)
+const rs = (a, b) => scaler * R(a, b)
+
 function createHeightMap() {
     let c_map = createGraphics(round(height), round(height / 2))
-    c_map.background(random(50, 120))
+    c_map.background(R(50, 120))
     const mapSize = V(c_map.width, c_map.height)
     scaler = mapSize.x / 100
 
-    const mapType = choose([0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3])
+    const mapType = R3([0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 4, 4])
 
     if (mapType == 0 || mapType == 1) {
         const pathCreator = new PathCreator(mapSize.x, mapSize.y)
@@ -39,17 +40,17 @@ function createHeightMap() {
         const painter = new Painter(c_map)
 
         if (mapType == 0) {
-            const sumCircles = random(100, 1000)
-            const options = Array(4).fill(0).map((_, i) => choose([0, 1, 2]))
+            const sumCircles = R(100, 1000)
+            const options = Array(4).fill(0).map((_, i) => R3([0, 1, 2]))
             for (let i = 0; i < sumCircles; i++) {
-                const ct = choose(options)
+                const ct = R3(options)
                 const pt = pointGenerator.getPoint()
                 if (ct == 0) painter.drawCircle(pt, rs(1, 10))
                 if (ct == 1) painter.hole(pt, rs(.5, 4))
                 if (ct == 2) painter.crater(pt, rs(.5, 4))
             }
         } else if (mapType == 1) {
-            const numLines = random(200, 1000)
+            const numLines = R(200, 1000)
             for (let i = 0; i < numLines; i++) {
                 path = pathCreator.createPath(pointGenerator.getPoint())
                 painter.drawLine(path)
@@ -60,9 +61,9 @@ function createHeightMap() {
 
     } else if (mapType == 2) {
         c_map.loadPixels()
-        const ratioNoiseScale = random(10)
-        const ratioForce = random(5)
-        const noiseScale = random(2, 6)
+        const ratioNoiseScale = R(10)
+        const ratioForce = R(5)
+        const noiseScale = R(2, 6)
         for (let y = 0; y < mapSize.y; y++) {
             const percY = y / mapSize.y
             for (let x = 0; x < mapSize.x; x++) {
@@ -81,16 +82,16 @@ function createHeightMap() {
         shaderGraphics.noStroke()
         shaderGraphics.shader(voronoiShader)
         voronoiShader.setUniform('resolution', [c_map.width, c_map.height])
-        voronoiShader.setUniform('seed', random(1000))
-        voronoiShader.setUniform('scale', random(.4, 7))
+        voronoiShader.setUniform('seed', R(1000))
+        voronoiShader.setUniform('scale', R(.4, 7))
         shaderGraphics.rect(0, 0, c_map.width, c_map.height)
         c_map.image(shaderGraphics, 0, 0, c_map.width, c_map.height)
     } else if (mapType == 4) {
         const painter = new Painter(c_map)
-        const numLines = random(200, 1000)
-        const center = V(random(mapSize.x), random(mapSize.y))
+        const numLines = R(200, 1000)
+        const center = V(R(mapSize.x), R(mapSize.y))
         for (let i = 0; i < numLines; i++) {
-            const a = random(360)
+            const a = R(360)
             const start = angleVec(a, rs(3, 30)).add(center)
             const end = angleVec(a, mapSize.x * 1.5).add(center)
             path = toCrv([start, end])
@@ -100,18 +101,19 @@ function createHeightMap() {
 
 
     for (let i = 1; i < 4; i++) {
-        const deformType = choose([0, 1, 2, 2])
+        const deformType = R3([0, 1, 2, 2])
         if (deformType == 0)
-            c_map = swirl(c_map, V(random(mapSize.x), random(mapSize.y)), ms(60), random(mapSize.x / 4))
+            c_map = swirl(c_map, V(R(mapSize.x), R(mapSize.y)), ms(60), R(mapSize.x / 4))
         if (deformType == 1)
             c_map = smear(c_map, rs(4, 16), rs(2, 6))
     }
 
-    const sumAmmonites = random() < 0.8 ? 0 : random(2, 5)
-    for (let i = 0; i < sumAmmonites; i++) ammonite(c_map, V(random(mapSize.x), random(mapSize.y)), rs(1, 5))
-    const sumBushes = random() < 0.4 ? 0 : random(2, 5)
-    for (let i = 0; i < sumBushes; i++) bush(c_map, V(random(mapSize.x), random(mapSize.y)), rs(1, 5))
+    const sumAmmonites = R() < 0.8 ? 0 : R(2, 5)
+    for (let i = 0; i < sumAmmonites; i++) ammonite(c_map, V(R(mapSize.x), R(mapSize.y)), rs(1, 5))
+    const sumBushes = R() < 0.4 ? 0 : R(2, 5)
+    for (let i = 0; i < sumBushes; i++) bush(c_map, V(R(mapSize.x), R(mapSize.y)), rs(1, 5))
 
+    c_map.loadPixels()
     return c_map
 }
 
@@ -119,14 +121,14 @@ function createHeightMap() {
 class Painter {
     constructor(img) {
         this.img = img
-        this.clrthr = random() * random()
-        this.fllthr = constrain(random() < 0.5 ? random() * random() : 1 - random() * random(), 0.1, 0.9)
+        this.clrthr = R() * R()
+        this.fllthr = constrain(R() < 0.5 ? R() * R() : 1 - R() * R(), 0.1, 0.9)
 
     }
 
-    getColor = () => random() < this.clrthr ? 0 : 255
-    getFill = () => random() > this.fllthr
-    getAlpha = () => random(100, 255)
+    getColor = () => R() < this.clrthr ? 0 : 255
+    getFill = () => R() > this.fllthr
+    getAlpha = () => R(100, 255)
     getBlur = () => rs(0, 3)
 
     drawPath(path, offset = V(0, 0)) {
@@ -163,7 +165,7 @@ class Painter {
 
     hole(pos, r) {
         this.img.fill(0, 100)
-        this.img.drawingContext.filter = `blur(${r * random(.5, 1.5)}px)`
+        this.img.drawingContext.filter = `blur(${r * R(.5, 1.5)}px)`
         this.img.circle(pos.x, pos.y, r)
         this.img.circle(pos.x, pos.y, r / 2)
     }
@@ -180,52 +182,52 @@ class Painter {
 
         this.img.noStroke()
         this.img.drawingContext.filter = `blur(${rs(1, 4)}px)`
-        this.img.fill(255, random(100, 255))
+        this.img.fill(255, R(100, 255))
         this.drawPath(shape, V(ms(2), ms(2)))
-        this.img.fill(0, random(100, 255))
+        this.img.fill(0, R(100, 255))
         this.drawPath(shape)
     }
 }
 
 
 
-function fillShape(img, path, offset, clr, alpha = 255, blur) {
-    if (blur) img.drawingContext.filter = `blur(${blur}px)`
-    if (clr != null) img.fill(clr, alpha)
-    offset = offset || p(0, 0)
+// function fillShape(img, path, offset, clr, alpha = 255, blur) {
+//     if (blur) img.drawingContext.filter = `blur(${blur}px)`
+//     if (clr != null) img.fill(clr, alpha)
+//     offset = offset || p(0, 0)
 
-    img.beginShape()
-    for (let i = 0; i < path.length; i++) {
-        const pos = path.getPointAt(i)
-        img.vertex(pos.x + offset.x, pos.y + offset.y)
-    }
-    img.endShape()
-}
+//     img.beginShape()
+//     for (let i = 0; i < path.length; i++) {
+//         const pos = path.getPointAt(i)
+//         img.vertex(pos.x + offset.x, pos.y + offset.y)
+//     }
+//     img.endShape()
+// }
 
 
-function createNormalMap(heightMap) {
-    const normalMap = createGraphics(heightMap.width, heightMap.height)
-    heightMap.loadPixels()
-    normalMap.loadPixels()
-    for (let x = 0; x < heightMap.width; x++) {
-        for (let y = 0; y < heightMap.height; y++) {
-            const n = calc_normal(heightMap, x, y)
-            normalMap.set(x, y, color(n.x * 127 + 127, n.y * 127 + 127, n.z * 127 + 127))
-        }
-    }
-    normalMap.updatePixels()
-    return normalMap
-}
+// function createNormalMap(heightMap) {
+//     const normalMap = createGraphics(heightMap.width, heightMap.height)
+//     heightMap.loadPixels()
+//     normalMap.loadPixels()
+//     for (let x = 0; x < heightMap.width; x++) {
+//         for (let y = 0; y < heightMap.height; y++) {
+//             const n = calc_normal(heightMap, x, y)
+//             normalMap.set(x, y, color(n.x * 127 + 127, n.y * 127 + 127, n.z * 127 + 127))
+//         }
+//     }
+//     normalMap.updatePixels()
+//     return normalMap
+// }
 
-function calc_normal(hm, x, y) {
-    const h1 = hm.get(x + 1, y)[0]
-    const h2 = hm.get(x, y + 1)[0]
-    const h3 = hm.get(x - 1, y)[0]
-    const h4 = hm.get(x, y - 1)[0]
-    const n = v(h1 - h3, h2 - h4, 0)
-    n.normalize()
-    return n
-}
+// function calc_normal(hm, x, y) {
+//     const h1 = hm.get(x + 1, y)[0]
+//     const h2 = hm.get(x, y + 1)[0]
+//     const h3 = hm.get(x - 1, y)[0]
+//     const h4 = hm.get(x, y - 1)[0]
+//     const n = v(h1 - h3, h2 - h4, 0)
+//     n.normalize()
+//     return n
+// }
 
 let shaderGraphics, shaderResultGraphics, swirlShader, voronoiShader
 
@@ -251,10 +253,10 @@ function swirl(img, pos, ammount, r) {
 }
 
 function smear(img, strength, r) {
-    const p1 = V(random(img.width), random(img.height))
-    const p2 = V(random(img.width), random(img.height))
+    const p1 = V(R(img.width), R(img.height))
+    const p2 = V(R(img.width), R(img.height))
     const middle = vadd(p1, p2).div(2)
-    const dir = vsub(p2, p1).rotate(90).normalize(random(-500, 500) * PS)
+    const dir = vsub(p2, p1).rotate(90).normalize(R(-500, 500) * PS)
     const center = vadd(middle, dir)
     const angleStart = (vsub(p1, center).heading() + 360) % 360
     const angleEnd = (vsub(p2, center).heading() + 360) % 360
@@ -300,7 +302,7 @@ function ammonite(img, pos, maxr) {
     const c = createGraphics(img.width, img.height)
     c.strokeWeight(4)
 
-    const revolutions = random(2, 5)
+    const revolutions = R(2, 5)
     let spiralPath = []
     for (let r = 0; r < maxr; r += 1.5) {
         const a = map(r, 0, maxr, 0, 360 * revolutions)
@@ -329,8 +331,8 @@ function bush(img, pos, r) {
     const bushImg = createGraphics(img.width, img.height)
     bushImg.translate(pos.x, pos.y)
     for (let i = 0; i < 200; i++) {
-        const rot_z = random(180)
-        const rot = random(360)
+        const rot_z = R(180)
+        const rot = R(360)
         const d = cos(rot_z) * r
         const p2 = angleVec(rot, d)
         for (let j = 0; j < d; j++) {
@@ -347,11 +349,11 @@ function bush(img, pos, r) {
 
 class PathCreator {
     constructor(w, h, pathType) {
-        if (!pathType) pathType = choose(Object.values(PathCreator.pathTypes))
+        if (!pathType) pathType = R3(Object.values(PathCreator.pathTypes))
         this.w = w; this.h = h; this.pathType = pathType
 
-        this.segmentLength = this.w * random(0.001, .01)
-        this.pathLengths = choose([null, random(50, 300)])
+        this.segmentLength = this.w * R(0.001, .01)
+        this.pathLengths = R3([null, R(50, 300)])
 
         this.pathType.init(this)
     }
@@ -359,10 +361,10 @@ class PathCreator {
     createPath(startingPoint) {
         this.pathType.initPath(this)
 
-        let pos = this.pathType.getStartingPoint(this) || startingPoint || V(random(this.w), random(this.h))
+        let pos = this.pathType.getStartingPoint(this) || startingPoint || V(R(this.w), R(this.h))
 
         const path = []
-        const l = this.pathLengths || random(50, 300)
+        const l = this.pathLengths || R(50, 300)
         while (path.length < l) {
             const dir = this.pathType.getDirection(this, pos)
             pos = pos.add(dir)
@@ -375,31 +377,34 @@ class PathCreator {
     static pathTypes = {
         noiseField: {
             name: 'noise field',
-            init: pathCreator => pathCreator.noiseScale = pathCreator.w * random(0.02, 0.2),
+            init: pathCreator => pathCreator.noiseScale = pathCreator.w * R(0.02, 0.2),
             initPath: () => { }, getStartingPoint: () => { },
             getDirection: (pathCreator, pos) => {
                 const n = noise(1000 + pos.x / pathCreator.noiseScale, 1000 + pos.y / pathCreator.noiseScale)
-                return angleVec(n * 360, random(pathCreator.segmentLength))
+                return angleVec(n * 360, R(pathCreator.segmentLength))
             }
         }, randomWalker: {
             name: 'random walker',
             init: () => { }, initPath: () => { }, getStartingPoint: () => { },
-            getDirection: (pathCreator, pos) => angleVec(random(360), pathCreator.segmentLength * random(10))
+            getDirection: (pathCreator, pos) => angleVec(R(360), pathCreator.segmentLength * R(10))
         }, straightLines: {
             name: 'straight lines',
             init: () => { },
-            initPath: pathCreator => pathCreator.direction = random(360),
+            initPath: pathCreator => pathCreator.direction = R(360),
             getStartingPoint: () => { },
-            getDirection: (pathCreator, pos) => angleVec(pathCreator.direction, random(pathCreator.segmentLength))
+            getDirection: (pathCreator, pos) => angleVec(pathCreator.direction, R(pathCreator.segmentLength))
         }, outwards: {
             name: 'outwards',
-            init: pc => { pc.center = V(random(pc.w), random(pc.h)); pc.pathLengths = pc.w },
+            init: pc => { pc.center = V(R(pc.w), R(pc.h)); pc.pathLengths = pc.w },
             initPath: pc => {
-                pc.angle = random(360)
-                if (random() < 0.01) pc.center = V(random(pc.w), random(pc.h))
+                pc.angle = R(360)
+                if (R() < 0.01) pc.center = V(R(pc.w), R(pc.h))
             },
             getStartingPoint: pc => pc.center.copy(),
-            getDirection: (pathCreator, pos) => angleVec(pathCreator.angle, random(pathCreator.segmentLength))
+            getDirection: (pc, pos) => {
+                if (vdist(pos, pc.center) > pc.w/2) pc.angle += R(-2, 2)
+                angleVec(pc.angle, R(pc.segmentLength))
+            }
         }
     }
 
@@ -408,7 +413,7 @@ class PathCreator {
 
 class PointGenerator {
     constructor(w, h, generatorType, data) {
-        this.generatorType = generatorType || choose(Object.values(PointGenerator.gts))
+        this.generatorType = generatorType || R3(Object.values(PointGenerator.gts))
         this.w = w; this.h = h
 
         this.generatorType.init(this)
@@ -423,27 +428,27 @@ class PointGenerator {
         random: {
             name: 'random',
             init: () => { },
-            getPoint: (pg) => V(pg.w * random(), pg.h * random())
+            getPoint: (pg) => V(pg.w * R(), pg.h * R())
         },
         grid: {
             name: 'grid',
             init: (pg) => {
-                pg.data = pg.w * random(.02, .1)
+                pg.data = pg.w * R(.02, .1)
             },
             getPoint: (pg) => {
-                let y = round_random(0, pg.h / pg.data)
-                let x = round_random(0, pg.w / pg.data)
+                let y = R2(0, pg.h / pg.data)
+                let x = R2(0, pg.w / pg.data)
                 return V(x * pg.data, y * pg.data)
             }
         },
         hexGrid: {
             name: 'hex grid',
             init: (pg) => {
-                pg.data = pg.w * random(.02, .1)
+                pg.data = pg.w * R(.02, .1)
             },
             getPoint: (pg) => {
-                let y = round_random(0, pg.h / pg.data)
-                let x = round_random(0, pg.w / pg.data)
+                let y = R2(0, pg.h / pg.data)
+                let x = R2(0, pg.w / pg.data)
                 if (y % 2 == 0) x -= .5
                 return V(x * pg.data, y * pg.data)
             }
@@ -451,17 +456,17 @@ class PointGenerator {
         distribution: {
             name: 'distribution',
             init: (pg) => {
-                pg.data = pg.w * random(.1, .5)
+                pg.data = pg.w * R(.1, .5)
                 pg.points = []
             },
             getPoint: (pg) => {
                 if (pg.points.length == 0) {
-                    pg.points.push(V(random(pg.w), random(pg.h)))
+                    pg.points.push(V(R(pg.w), R(pg.h)))
                     return pg.points[0]
                 }
                 let tries = 0
                 while (tries < 100) {
-                    const pos = V(random(pg.w), random(pg.h))
+                    const pos = V(R(pg.w), R(pg.h))
                     for (const pos2 of pg.points) {
                         if (vdist(pos, pos2) < pg.data) {
                             tries++
