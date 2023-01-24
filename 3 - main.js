@@ -64,7 +64,7 @@ async function makeImage() {
     console.time('phase - draw relief')
     translate(-width / 2, height / 2)
 
-    if (R() < 10.3) {
+    if (R() < 0.3) {
         ribbonStart = V(drawArea[0] * R(-.4, .4), -drawArea[1] * .4)
         ribbonCenter = V(R(-100, 100), 0),
             ribbonEnd = V(drawArea[0] * R(-.4, .4), drawArea[1] * .4)
