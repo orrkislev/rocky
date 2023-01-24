@@ -49,6 +49,8 @@ async function makeImage() {
     }
 
     heightMap = createHeightMap()
+    // image(heightMap, 0, 0, width, width * heightMap.height / heightMap.width)
+    // return
 
     drawArea = withWallShadow ? [width, height] : [gridWidth, gridHeight]
 

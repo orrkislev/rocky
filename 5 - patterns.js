@@ -86,9 +86,8 @@ function createHeightMap() {
 class Painter {
     constructor(img) {
         this.img = img
-        this.clrthr = R() * R()
+        this.clrthr = .5//R() * R()
         this.fllthr = constrain(R() < 0.5 ? R() * R() : 1 - R() * R(), 0.1, 0.9)
-
     }
 
     getColor = () => R() < this.clrthr ? 0 : 255

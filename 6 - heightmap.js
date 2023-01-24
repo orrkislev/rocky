@@ -119,7 +119,6 @@ function bush(img, pos, r) {
 class PathCreator {
     constructor(w, h, pathType) {
         if (!pathType) pathType = R3(Object.values(PathCreator.pathTypes))
-        print({ pathType })
         this.w = w; this.h = h; this.pathType = pathType
 
         this.segmentLength = this.w * R(0.001, .01)
@@ -172,7 +171,7 @@ class PathCreator {
             },
             getStartingPoint: pc => pc.center.copy(),
             getDirection: (pc, pos) => {
-                if (vdist(pos, pc.center) > pc.w/2) pc.angle += R(-2, 2)
+                if (vdist(pos, pc.center) > pc.w/4) pc.angle += R(-2, 2)
                 return angleVec(pc.angle, R(pc.segmentLength))
             }
         }
