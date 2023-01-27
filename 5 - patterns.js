@@ -26,7 +26,7 @@ function createHeightMap() {
                 if (ct == 2) painter.crater(pt, rs(.5, 4))
             }
         } else if (mapType == 1) {
-            const numLines = R(200, 1000)
+            const numLines = R(200, 800)
             for (let i = 0; i < numLines; i++) {
                 path = pathCreator.createPath(pointGenerator.getPoint())
                 painter.drawLine(path)
@@ -86,7 +86,7 @@ function createHeightMap() {
 class Painter {
     constructor(img) {
         this.img = img
-        this.clrthr = .5//R() * R()
+        this.clrthr = R() * R()
         this.fllthr = constrain(R() < 0.5 ? R() * R() : 1 - R() * R(), 0.1, 0.9)
     }
 

@@ -25,9 +25,8 @@ function setup() {
     pencilDarkColor = [0, 0, R() < 0.5 ? 0 : 50]
     pencilBrightColor = R() < 0.7 || backgroundColor[0] < 100 ? [255, 255, 255] : backgroundColor
 
-    renderType = R3([1, 2])
+    renderType = 1//R3([1, 2])
     if (renderType == 1) moreColors = R3([goldColors, greenColors])
-    withDeeperShadow = R() < 0.5
     withWallShadow = R() < 0.5
 
     makeImage()
@@ -82,15 +81,18 @@ async function makeImage() {
         ribbon.mask = createGraphics(width, height)
         ribbon.mask.strokeWeight(ribbon.width / 2)
         for (let i = 0; i < ribbon.path.length; i++) {
-            // const pos = ribbon.path.getPointAt(i)
             const pos = ribbon.path[i]
             ribbon.mask.point(width / 2 + pos.x, height / 2 + pos.y)
         }
         ribbon.mask.loadPixels()
+        // resetMatrix()
+        // image(ribbon.mask, 0, 0)
+        // asldhs()
         applyRibbon = () => {
-            const i = ((pos.y + height / 2)*width*d+pos.x + width / 2)*4
-            const inRibbonMask = ribbon.mask.pixels[i+3] > 0
-            // const inRibbonMask = ribbon.mask.get(pos.x + width / 2, pos.y + height / 2)[3] > 0
+            const x = round(pos.x + width / 2)
+            const y = round(pos.y + height / 2)
+            const i = (y * d * width * d + x * d) * 4
+            const inRibbonMask = ribbon.mask.pixels[i + 3] > 0
             if (inRibbonMask) {
                 brightColor = ribbon.color
                 // depth = lerp(lastDepth, depth + 60, .5)
@@ -101,12 +103,13 @@ async function makeImage() {
         }
     }
 
+    const shadowMultiplier = random(.2,.8)
     applyLights = () => {
+        if (!depth) return
         if (depth > lightHeight) col += 200
         lightHeight = max(lightHeight, depth)
-        // const distToLight = V(pos.x / gridHeight + .5, pos.y / gridWidth + .5).sub(lightPos).mag()
         const distToLight = V(pos.x, pos.y).div(gridHeight, gridWidth).add(.5, .5).sub(lightPos).mag()
-        const lightStep = map(distToLight, 0, 2, 1, .2)
+        const lightStep = map(distToLight, 0, 2, 1, .2) * shadowMultiplier
         lightHeight -= lightStep
     }
 
@@ -139,8 +142,8 @@ async function makeImage() {
     offsetX = drawArea[1] * tan(90 - fillDir)
     startX = fillDir > 0 ? -drawArea[0] / 2 - offsetX : -drawArea[0] / 2
     endX = fillDir > 0 ? drawArea[0] / 2 : drawArea[0] / 2 - offsetX
-    moveX = PS * Math.sign(fillDir) * cos(fillDir) * .75
-    moveY = PS * Math.sign(fillDir) * sin(fillDir) * .75
+    moveX = PS * Math.sign(fillDir) * cos(fillDir) * .25
+    moveY = PS * Math.sign(fillDir) * sin(fillDir) * .25
     strokeWeight(PS * 2)
     for (let x = startX; x < endX; x += 1 * PS) {
         lightHeight = 0
@@ -163,16 +166,13 @@ async function makeImage() {
 
             const pos2d = projection(relY, relX)
             if (pos2d) {
-                const percX = (pos2d.y + 180) / 360
-                const percY = (pos2d.x + 90) / 180
-                const i = (Math.round(percX * heightMap.width)*heightMap.width*d+Math.round(percY * heightMap.height))*4
+                const i = 4  * (
+                        (Math.round(((pos2d.x + 90) / 180) * heightMap.height) * d) 
+                        * (heightMap.width * d)
+                        + Math.round(((pos2d.y + 180) / 360) * heightMap.width) * d )
                 depth += heightMap.pixels[i]
-                // const sampleColor = heightMap.get(percX * heightMap.width, percY * heightMap.height)
-                // depth += sampleColor[0]
 
-                // depth += noise(percX * 30, percY * 30) * 8 - 4
                 slope = depth - lastDepth
-                // col = easeInOutExpo((slope + 1) / 2) * slopeMultiplier
                 col = slope * slopeMultiplier
                 lastDepth = depth
                 hitMap = true
@@ -187,12 +187,11 @@ async function makeImage() {
             col = constrain(col, 0, 255)
 
             strokeWeight(PS * (depth / 255 + 1) * 2)
-            
+
             prepareRender()
-            
+
             const drawPos = distortPos(pos)
-            // point(drawPos.x+width, drawPos.y)
-            line(drawPos.x + width, drawPos.y, drawPos.x + width, drawPos.y+.1)
+            line(drawPos.x + width, drawPos.y, drawPos.x + width, drawPos.y + .1)
         }
         pos.x++
         await timeout()
