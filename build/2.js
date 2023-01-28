@@ -32,7 +32,7 @@ function createHeightMap() {
     const mapSize = V(c_map.width, c_map.height)
     scaler = mapSize.x / 100
 
-    const mapType = R3([0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 4, 4])
+    const mapType = R3([0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3])
 
     if (mapType == 0 || mapType == 1) {
         const pathCreator = new PathCreator(mapSize.x, mapSize.y)
@@ -50,7 +50,7 @@ function createHeightMap() {
                 if (ct == 2) painter.crater(pt, rs(.5, 4))
             }
         } else if (mapType == 1) {
-            const numLines = R(200, 1000)
+            const numLines = R(200, 800)
             for (let i = 0; i < numLines; i++) {
                 path = pathCreator.createPath(pointGenerator.getPoint())
                 painter.drawLine(path)
@@ -86,17 +86,6 @@ function createHeightMap() {
         voronoiShader.setUniform('scale', R(.4, 7))
         shaderGraphics.rect(0, 0, c_map.width, c_map.height)
         c_map.image(shaderGraphics, 0, 0, c_map.width, c_map.height)
-    } else if (mapType == 4) {
-        const painter = new Painter(c_map)
-        const numLines = R(200, 1000)
-        const center = V(R(mapSize.x), R(mapSize.y))
-        for (let i = 0; i < numLines; i++) {
-            const a = R(360)
-            const start = angleVec(a, rs(3, 30)).add(center)
-            const end = angleVec(a, mapSize.x * 1.5).add(center)
-            path = toCrv([start, end])
-            painter.drawLine(path)
-        }
     }
 
 
@@ -123,7 +112,6 @@ class Painter {
         this.img = img
         this.clrthr = R() * R()
         this.fllthr = constrain(R() < 0.5 ? R() * R() : 1 - R() * R(), 0.1, 0.9)
-
     }
 
     getColor = () => R() < this.clrthr ? 0 : 255
@@ -402,8 +390,8 @@ class PathCreator {
             },
             getStartingPoint: pc => pc.center.copy(),
             getDirection: (pc, pos) => {
-                if (vdist(pos, pc.center) > pc.w/2) pc.angle += R(-2, 2)
-                angleVec(pc.angle, R(pc.segmentLength))
+                if (vdist(pos, pc.center) > pc.w/4) pc.angle += R(-2, 2)
+                return angleVec(pc.angle, R(pc.segmentLength))
             }
         }
     }

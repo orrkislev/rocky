@@ -25,7 +25,7 @@ function setup() {
     pencilDarkColor = [0, 0, R() < 0.5 ? 0 : 50]
     pencilBrightColor = R() < 0.7 || backgroundColor[0] < 100 ? [255, 255, 255] : backgroundColor
 
-    renderType = 1//R3([1, 2])
+    renderType = R3([1, 2])
     if (renderType == 1) moreColors = R3([goldColors, greenColors])
     withWallShadow = R() < 0.5
 
