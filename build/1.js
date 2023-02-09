@@ -2,6 +2,7 @@
 
 class Random {
     constructor() {
+        this.usage = 0
         this.useA = false;
         this.sfc32 = function (uint128Hex) {
             let a = parseInt(uint128Hex.substr(0, 8), 16);
@@ -489,15 +490,15 @@ async function makeImage() {
 
 
 
-
+    RANDOM.reset()
     const d = pixelDensity()
     console.time('phase - draw relief')
     translate(-width / 2, height / 2)
-
+    
     if (R() < 0.3) {
         ribbonStart = V(drawArea[0] * R(-.4, .4), -drawArea[1] * .4)
-        ribbonCenter = V(R(-100, 100), 0),
-            ribbonEnd = V(drawArea[0] * R(-.4, .4), drawArea[1] * .4)
+        ribbonCenter = V(drawArea[0] * R(-.3, .3), 0)
+        ribbonEnd = V(drawArea[0] * R(-.4, .4), drawArea[1] * .4)
         ribbonStartDir = vsub(ribbonCenter, ribbonStart).rotate(R(-45, 45)).normalize(100 * PS)
         ribbonEndDir = vsub(ribbonCenter, ribbonEnd).rotate(R(-45, 45)).normalize(100 * PS)
         ribbonPath = [ribbonStart, ribbonStart.add(ribbonStartDir), ribbonCenter, ribbonEnd.add(ribbonEndDir), ribbonEnd]
@@ -534,7 +535,7 @@ async function makeImage() {
         }
     }
 
-    const shadowMultiplier = random(.2,.8)
+    const shadowMultiplier = R(.2, .8)
     applyLights = () => {
         if (!depth) return
         if (depth > lightHeight) col += 200
@@ -597,10 +598,10 @@ async function makeImage() {
 
             const pos2d = projection(relY, relX)
             if (pos2d) {
-                const i = 4  * (
-                        (Math.round(((pos2d.x + 90) / 180) * heightMap.height) * d) 
-                        * (heightMap.width * d)
-                        + Math.round(((pos2d.y + 180) / 360) * heightMap.width) * d )
+                const i = 4 * (
+                    (Math.round(((pos2d.x + 90) / 180) * heightMap.height) * d)
+                    * (heightMap.width * d)
+                    + Math.round(((pos2d.y + 180) / 360) * heightMap.width) * d)
                 depth += heightMap.pixels[i]
 
                 slope = depth - lastDepth

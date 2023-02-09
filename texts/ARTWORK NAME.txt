@@ -1,0 +1,14 @@
+ARTWORK NAME:
+Petrography Case
+
+ARTIST NAME:
+Orr Kislev
+
+ARTIST BIO:
+A creative coder, a generative artist, a product designer, and a robotics enthusiast who has been coding since the age of 5. Within the generative art community, Orr is known for highly detailed and figurative all-code projects.
+
+EDITION SIZE:
+200
+
+PRICE:
+0.1 ETH

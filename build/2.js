@@ -33,6 +33,7 @@ function createHeightMap() {
     scaler = mapSize.x / 100
 
     const mapType = R3([0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3])
+    print(mapType)
 
     if (mapType == 0 || mapType == 1) {
         const pathCreator = new PathCreator(mapSize.x, mapSize.y)
@@ -88,7 +89,7 @@ function createHeightMap() {
         c_map.image(shaderGraphics, 0, 0, c_map.width, c_map.height)
     }
 
-
+    RANDOM.reset()
     for (let i = 1; i < 4; i++) {
         const deformType = R3([0, 1, 2, 2])
         if (deformType == 0)
@@ -129,10 +130,9 @@ class Painter {
     }
 
     drawLine(path) {
-        if (path.length > this.img.width / 10 && this.getFill()) {
+        if (this.getFill()) {
             this.img.noStroke()
-            const alpha =
-                this.img.fill(this.getColor(), this.getAlpha())
+            this.img.fill(this.getColor(), this.getAlpha())
         } else {
             this.img.stroke(this.getColor(), this.getAlpha())
             this.img.strokeWeight(rs(0, 1))

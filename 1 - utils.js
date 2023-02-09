@@ -2,6 +2,7 @@
 
 class Random {
     constructor() {
+        this.usage = 0
         this.useA = false;
         this.sfc32 = function (uint128Hex) {
             let a = parseInt(uint128Hex.substr(0, 8), 16);
