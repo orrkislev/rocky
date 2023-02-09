@@ -11,4 +11,4 @@ function genTokenData(projectNum) {
 
 
 let tokenData = genTokenData()
-tokenData = {hash: '0x8e80e6500f2192bdf3c797bed29f725addef733bcb6f7fadacd272299b885be8', tokenId: 'NaN'}
+// tokenData = {hash: '0x8e80e6500f2192bdf3c797bed29f725addef733bcb6f7fadacd272299b885be8', tokenId: 'NaN'}
